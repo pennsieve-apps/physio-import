@@ -62,6 +62,7 @@ import json  # noqa: E402
 import logging  # noqa: E402
 import math  # noqa: E402
 import platform  # noqa: E402
+import re  # noqa: E402
 import resource  # noqa: E402
 import time  # noqa: E402
 import traceback  # noqa: E402
@@ -99,9 +100,9 @@ DEFAULTS = {"SPECIES": "auto", "TIME_COLUMN": "", "SAMPLING_RATE": "0", "EXCLUDE
             "FIGURES": "true", "INSPECTOR": "true", "THREADS": "0"}
 REC_COLS = ["recording_id", "subject", "session", "label", "path", "species", "start_time", "duration_s", "recorded_s",
             "n_segments", "channel_types", "source_format", "source_path", "metadata_source", "age", "sex",
-            "task", "run"]  # task, run: BIDS entities of the run (empty for other sources)
+            "task", "run", "start_time_tz"]  # start_time_tz: UTC | local | '' (how start_time is meant)  # task, run: BIDS entities of the run (empty for other sources)
 CH_COLS = ["recording_id", "channel", "type", "original_name", "unit", "sampling_rate_hz", "n_samples", "calibrated",
-           "scale", "site", "typing", "status", "status_description"]
+           "scale", "site", "typing", "status", "status_description", "derived_from"]
 EV_COLS = ["recording_id", "onset", "duration", "trial_type", "event_id", "amplitude", "amplitude_unit",
            "pulse_width_us", "frequency_hz", "train_duration_s", "train_on_s", "train_off_s", "n_pulses", "polarity",
            "waveform", "site", "contact", "condition", "label", "source"]
@@ -272,7 +273,7 @@ def chunks(sig):
 def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir: Path, params: dict,
             qc_rows: list, insp_rows: list) -> dict:
     t_rec = time.monotonic()
-    span = max(st + n / sig.rate for sig in rec.signals for st, n in sig.segments)
+    span = max(seg_end(sig, s) for sig in rec.signals for s in range(len(sig.segments)))
     zoom = zoom_window(rec.signals)
     prog = Progress(rid)
     # typing
@@ -295,10 +296,26 @@ def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir:
                 t = t or "other"
         cal = C.calibrate(t, sig.unit, row.unit if row else "", row.scale if row else None)
         typed.append((sig, t, typing, cal, row))
-    names = C.nwb_names([t for _, t, _, _, _ in typed], [(r.name if r else "") for _, _, _, _, r in typed])
+    # raw channels are named first, so a processed copy never takes the bare type name
+    derived = [C.is_derived(sig.name, sig.leaf) for sig, *_ in typed]
+    order = sorted(range(len(typed)), key=lambda i: (derived[i], i))
+    named = C.nwb_names([typed[i][1] for i in order], [(typed[i][4].name if typed[i][4] else "") for i in order])
+    names = [""] * len(typed)
+    for i, n in zip(order, named):
+        names[i] = n
+    derived_from = [""] * len(typed)
+    for i, (sig, t, *_rest) in enumerate(typed):
+        if not derived[i]:
+            continue
+        raw = [j for j in range(len(typed)) if not derived[j] and typed[j][1] == t]
+        if t == "other":  # unrelated 'other' channels: only a raw sibling sharing a name token
+            toks = set(re.findall(r"[a-z]{2,}", (sig.leaf or sig.name).lower())) - {"processed", "filtered", "filt",
+                                                                                     "clean", "cleaned", "derived"}
+            raw = [j for j in raw if toks & set(re.findall(r"[a-z]{2,}", typed[j][0].name.lower()))]
+        derived_from[i] = names[raw[0]] if raw else "unknown"
     # pass 1: checks, envelope, storage decision
     plans, ch_rows = [], []
-    for (sig, t, typing, cal, row), name in zip(typed, names):
+    for k, ((sig, t, typing, cal, row), name) in enumerate(zip(typed, names)):
         st = Q.ChannelStats(rate=sig.rate, span=span, zoom=zoom)
         is_float = sig.dtype.kind == "f"
         has_invalid = False
@@ -353,6 +370,7 @@ def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir:
         notes = [n for n in ((sig.type_note if typing == "name" else ""), cal.note, sdesc) if n]
         plan.description = (f"{sig.name}: type {t} (by {typing}); "
                             f"{'calibrated' if cal.calibrated else 'not calibrated'}; stored as {storage}"
+                            + (f"; processed copy of {derived_from[k]}" if derived_from[k] else "")
                             + (f"; {sig.description}" if sig.description else ""))
         plan.comments = f"status {status}" + (f": {sdesc}" if sdesc else "")
         plans.append(plan)
@@ -360,7 +378,7 @@ def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir:
         ch_rows.append({"recording_id": rid, "channel": name, "type": t, "original_name": sig.name, "unit": cal.unit,
                         "sampling_rate_hz": fmt(sig.rate, 10), "n_samples": sig.n_samples,
                         "calibrated": "true" if cal.calibrated else "false", "scale": fmt(cal.scale, 10),
-                        "site": site, "typing": typing, "status": status,
+                        "site": site, "typing": typing, "status": status, "derived_from": derived_from[k],
                         "status_description": "; ".join(notes), "_stats": st, "_storage": storage})
         for k in ("n_samples", "nan_fraction", "min", "max", "mean", "sd", "flat_fraction", "saturated_fraction",
                   "lag1_autocorrelation"):
@@ -372,6 +390,15 @@ def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir:
                 rec.markers.append(Marker(a, b - a, f"{name} clipped at {v:g} {cal.unit}", "artifact",
                                           {"channel_name": name, "source": "qc"}))
         qc_rows.append([rid, name, "storage", storage, ""])
+        er = effective_rate(sig)
+        if er is not None and abs(er - sig.rate) / sig.rate > 1e-4:
+            qc_rows.append([rid, name, "effective_rate_hz", fmt(er, 9),
+                            f"the source's sample times run at {er:.6g} Hz, not the stated {sig.rate:g} Hz; "
+                            "the NWB file keeps the source's times"])
+            rec.notes.append(f"WARNING: {name}: sample times run at {er:.6g} Hz, the file states {sig.rate:g} Hz")
+        if t == "hr" and not C.unit_key(sig.unit) and not (row and row.unit):
+            qc_rows.append([rid, name, "unit_assumed", "bpm", "no unit in the source: beats per minute assumed from "
+                            "the channel name"])
     # NWB
     sub = f"sub-{meta['subject']}" + (f"/ses-{meta['session']}" if meta["session"] else "")
     nwb_rel = f"{sub}/{rid}.nwb"
@@ -409,8 +436,9 @@ def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir:
             f"like the signal its type says (ECG beats, a pressure wave, breathing) and that the units are plausible. "
             + (f"Flagged: {', '.join(r['channel'] + ' ' + r['status'] for r in bad)} (title in colour). " if bad else
                "No channel was flagged flat, saturated or noisy. ") + RESEARCH)})
-    durations = [st + n / sig.rate for sig in rec.signals for st, n in sig.segments]
-    recorded = max(sum(n / sig.rate for _, n in sig.segments) for sig in rec.signals)
+    # from the source's own sample times where it has them (a clock may differ from the nominal rate)
+    durations = [seg_end(sig, s) for sig in rec.signals for s in range(len(sig.segments))]
+    recorded = max(sum(seg_end(sig, s) - sig.segments[s][0] for s in range(len(sig.segments))) for sig in rec.signals)
     types = []
     for r in ch_rows:
         if r["type"] not in types:
@@ -422,7 +450,7 @@ def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir:
              time.monotonic() - t_rec)
     return {"rec_row": {"recording_id": rid, "subject": meta["subject"], "session": meta["session"],
                         "label": meta["label"], "path": nwb_rel, "species": meta["species"],
-                        "start_time": _start_str(meta["start"]), "duration_s": fmt(max(durations), 9),
+                        "start_time": _start_str(meta["start"]), "start_time_tz": _start_tz(meta["start"]), "duration_s": fmt(max(durations), 9),
                         "recorded_s": fmt(recorded, 9), "n_segments": max(len(s.segments) for s in rec.signals),
                         "channel_types": "|".join(types), "source_format": rec.source_format, "source_path": rel
                         + (f"#{rec.key}" if rec.key else ""), "metadata_source": meta["metadata_source"],
@@ -434,6 +462,35 @@ def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir:
                          "n_trials": len(rec.stim_table) if rec.stim_table else 0,
                          "n_channels_flagged": sum(r["status"] != "good" for r in ch_rows),
                          "nwbinspector_messages": len(issues)}}
+
+
+def seg_end(sig, s: int) -> float:
+    """End of segment s (s from the recording start): the last sample time plus one sample interval."""
+    st, n = sig.segments[s]
+    if sig.segment_times is not None and n > 1:
+        t = np.asarray(sig.segment_times(s, n - 2, n), float)
+        return float(t[-1] + (t[-1] - t[-2]))
+    return st + n / sig.rate
+
+
+def effective_rate(sig) -> float | None:
+    """Samples per second of the source's own clock (from explicit sample times), else None."""
+    if sig.segment_times is None:
+        return None
+    n_tot = span_tot = 0.0
+    for s, (st, n) in enumerate(sig.segments):
+        if n > 1:
+            t = np.asarray(sig.segment_times(s, 0, 1), float)[0], np.asarray(sig.segment_times(s, n - 1, n), float)[0]
+            n_tot += n - 1
+            span_tot += t[1] - t[0]
+    return n_tot / span_tot if span_tot > 0 else None
+
+
+def _start_tz(st) -> str:
+    """How start_time is meant: UTC (an instant, e.g. from Unix time stamps), local (a wall clock), '' (unknown)."""
+    if st is None:
+        return ""
+    return "UTC" if st.tzinfo is not None else "local"
 
 
 def _start_str(st) -> str:
@@ -568,6 +625,10 @@ def main() -> int:
                 if c["status"] != "good":
                     warnings_out.append(f"{rid}: {c['channel']} ({c['original_name']}) {c['status']}: "
                                         f"{c['status_description']}")
+            for n_ in rec.notes:
+                if n_.startswith("WARNING: "):
+                    log.warning("%s: %s", rid, n_[9:])
+                    warnings_out.append(f"{rid}: {n_[9:]}")
             if not meta["species"]:
                 warnings_out.append(f"{rid}: species unknown (set SPECIES, or give it in recordings-map.csv or SDS "
                                     "subjects.xlsx): later steps assume human")

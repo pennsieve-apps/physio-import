@@ -737,13 +737,44 @@ references:
   year: 2020
   doi: "10.26275/qh3q-elj6"
 - type: software
-  title: "pyEDFlib"
+  title: "holgern/pyedflib: v0.1.42"
   authors:
-  - family-names: "Nahrstaedt"
-    given-names: "Holger"
-  url: "https://github.com/holgern/pyedflib"
+  - name: "Holger"
+  - name: "Simon Kern"
+  - name: "Dimitri Papadopoulos Orfanos"
+  - name: "Raphael Vallat"
+  - name: "Clemens Brunner"
+  - name: "Luca Cerina"
+  - name: "Stefan Appelhoff"
+  - name: "David T.H. Kao"
+  - name: "Craig Franklin"
+  - name: "Florian Hofer"
+  - name: "bitterisland07"
+  - name: "myd7349"
+  - name: "Marijn van Vliet"
+  - name: "Jukka Zitting"
+  - name: "Guillaume Cathelain"
+  - name: "David Ojeda"
+  - name: "Chadwick Boulay"
+  - name: "Blake"
+  - name: "Ben Beasley"
+  - name: "Iztok Fister Jr."
+  - name: "Emmanuel Ferdman"
+  - name: "John Mongan"
+  - name: "Wouter Potters"
+  - name: "WEN Hao"
+  - name: "Ogi Moore"
+  - name: "Matthias Klumpp"
+  - name: "Matteo"
+  - name: "Mmadu Manasseh"
+  - name: "Joseph"
+  - name: "Jacob Svensson"
+  publisher:
+    name: "Zenodo"
   repository-code: "https://github.com/holgern/pyedflib"
   license: BSD-3-Clause
+  year: 2025
+  doi: "10.5281/zenodo.3492211"
 - type: software
   title: "pymatreader"
   authors:
@@ -806,3 +837,59 @@ references:
   - name: "R. Nathan Spreng"
   url: "https://openneuro.org/datasets/ds000210/versions/00002"
   license: PDDL-1.0
+- type: article
+  title: "Arousal increases neural gain via the locus coeruleus–noradrenaline system in younger adults but not in older adults"
+  authors:
+  - family-names: "Lee"
+    given-names: "Tae-Ho"
+  - family-names: "Greening"
+    given-names: "Steven G."
+  - family-names: "Ueno"
+    given-names: "Taiji"
+  - family-names: "Clewett"
+    given-names: "David"
+  - family-names: "Ponzio"
+    given-names: "Allison"
+  - family-names: "Sakaki"
+    given-names: "Michiko"
+  - family-names: "Mather"
+    given-names: "Mara"
+  journal: "Nature Human Behaviour"
+  volume: "2"
+  start: "356"
+  end: "366"
+  year: 2018
+  doi: "10.1038/s41562-018-0344-1"
+  identifiers:
+  - type: other
+    value: "30320223"
+    description: PMID
+- type: article
+  title: "Higher locus coeruleus MRI contrast is associated with lower parasympathetic influence over heart rate variability"
+  authors:
+  - family-names: "Mather"
+    given-names: "Mara"
+  - family-names: "Joo Yoo"
+    given-names: "Hyun"
+  - family-names: "Clewett"
+    given-names: "David V."
+  - family-names: "Lee"
+    given-names: "Tae-Ho"
+  - family-names: "Greening"
+    given-names: "Steven G."
+  - family-names: "Ponzio"
+    given-names: "Allison"
+  - family-names: "Min"
+    given-names: "Jungwon"
+  - family-names: "Thayer"
+    given-names: "Julian F."
+  journal: "NeuroImage"
+  volume: "150"
+  start: "329"
+  end: "335"
+  year: 2017
+  doi: "10.1016/j.neuroimage.2017.02.025"
+  identifiers:
+  - type: other
+    value: "28215623"
+    description: PMID

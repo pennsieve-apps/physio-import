@@ -410,9 +410,11 @@ def main(out: Path) -> None:
     tsvgz(f2 / "sub-b01_task-rest_run-2_recording-resp_physio.tsv.gz", [b2["resp"][::20]])
     (f2 / "sub-b01_task-rest_run-2_recording-resp_physio.json").write_text(json.dumps({
         "SamplingFrequency": 25, "StartTime": 0.0, "Columns": ["respiratory"]}))
-    tsvgz(f2 / "sub-b01_task-rest_run-2_stim.tsv.gz", [np.where((b2["t"] > 20) & (b2["t"] < 25), 1.0, 0.0)[::5]])
+    on = np.where((b2["t"] > 20) & (b2["t"] < 25), 1.0, 0.0)[::5]
+    tsvgz(f2 / "sub-b01_task-rest_run-2_stim.tsv.gz", [on * 5.0, 10 + 90 * on])
     (f2 / "sub-b01_task-rest_run-2_stim.json").write_text(json.dumps({
-        "SamplingFrequency": 100, "StartTime": -1.0, "Columns": ["amplitude"], "amplitude": {"Units": "mA"}}))
+        "SamplingFrequency": 100, "StartTime": -1.0, "Columns": ["trigger", "luminance"], "trigger": {"Units": "V"},
+        "luminance": {"Units": "cd/m2", "Description": "screen luminance (the presented stimulus)"}}))
     (f2 / "sub-b01_task-rest_run-2_events.tsv").write_text("onset\tduration\ttrial_type\n10.0\t5.0\tbreath-hold\n")
     truth["sources"]["bids/sub-b01/func/sub-b01_task-rest_run-1_physio.tsv.gz"] = {
         "recording_id": "sub-b01_rec-rest-run1", "species": "human", "age": "P30Y", "sex": "F", "task": "rest", "run": "1",
@@ -420,7 +422,8 @@ def main(out: Path) -> None:
                      "other": ["other", "a.u.", 1.0, False]}}
     truth["sources"]["bids/sub-b01/func/sub-b01_task-rest_run-2_recording-ecg_physio.tsv.gz"] = {
         "recording_id": "sub-b01_rec-rest-run2", "task": "rest", "run": "2",
-        "channels": {"ecg": ["ecg", "V", 1e-3, True], "resp": ["resp", "a.u.", 1.0, False], "stim": ["stim", "mA", 1.0, True]},
+        "channels": {"ecg": ["ecg", "V", 1e-3, True], "resp": ["resp", "a.u.", 1.0, False], "stim": ["stim", "V", 1.0, True],
+                     "other": ["other", "cd/m2", 1.0, True]},
         "starts": {"ecg": 0.0, "resp": 1.0, "stim": 0.0}, "rates": {"ecg": 500.0, "resp": 25.0, "stim": 100.0},
         "events": {"breath-hold": 11.0}}
 

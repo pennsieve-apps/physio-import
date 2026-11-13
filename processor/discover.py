@@ -15,7 +15,7 @@ from pathlib import Path
 EXT = {
     ".edf": "edf", ".bdf": "bdf", ".hea": "wfdb", ".abf": "abf", ".smr": "smr", ".acq": "acq", ".nwb": "nwb",
     ".h5": "hdf5", ".hdf5": "hdf5", ".hdf": "hdf5", ".mat": "mat", ".csv": "csv", ".tsv": "tsv", ".txt": "txt",
-    ".xlsx": "xlsx", ".xls": "xlsx", ".wav": "wav",
+    ".xlsx": "xlsx", ".xls": "xls", ".wav": "wav",
     # other formats Neo reads (passed to Neo as they are)
     ".rhd": "intan", ".rhs": "intan", ".ns1": "blackrock", ".ns2": "blackrock", ".ns3": "blackrock",
     ".ns4": "blackrock", ".ns5": "blackrock", ".ns6": "blackrock", ".plx": "plexon", ".vhdr": "brainvision",
@@ -23,6 +23,7 @@ EXT = {
     ".smrx": "smrx", ".adicht": "adicht", ".adidat": "adicht",
 }
 DEFERRED = {
+    "xls": "Excel 97-2003 .xls is not read (openpyxl reads .xlsx only): save the sheet as .xlsx or CSV and run again.",
     "smrx": "Spike2 .smrx (64-bit) is not read: the only .smrx reader, CED's sonpy, is closed-source. Export the "
             "recording from Spike2 as .smr (File > Save As, 32-bit Spike2 data file) or as text/CSV (File > Export As, "
             "one column per channel with a Time column in seconds) and run again.",

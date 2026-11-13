@@ -16,8 +16,9 @@ BIDS continuous recordings: `*_physio.tsv.gz` and `*_stim.tsv.gz` with their JSO
 - Column types: `cardiac` is an ECG when its description, long name or the recording label says
   ECG/EKG, otherwise a pulse (PPG) signal (MR scanners record cardiac activity with a pulse
   oximeter); `respiratory`/`respiration` is respiration; in a _physio file `trigger` is the
-  scanner's volume trigger and is typed `other` (it is not a stimulation); in a _stim file every
-  column not otherwise recognised is a stimulation channel. Other columns are typed by name.
+  scanner's volume trigger and is typed `other` (it is not a stimulation); a _stim file is the
+  presented stimulus (audio, luminance), so its columns are `other` unless named trigger/TTL/stim.
+  Missing StartTime (REQUIRED) and several sidecars at one level are warnings. Other columns are typed by name.
 """
 from __future__ import annotations
 
@@ -53,8 +54,9 @@ def _dataset_root(path: Path, stop: Path | None) -> Path:
         d = d.parent
 
 
-def sidecar(path: Path, suffix: str, input_root: Path | None) -> tuple[dict, list[str]]:
-    """The merged sidecar of a physio/stim file (inheritance principle) and the files it came from."""
+def sidecar(path: Path, suffix: str, input_root: Path | None, warn: list | None = None) -> tuple[dict, list[str]]:
+    """The merged sidecar of a physio/stim file (inheritance principle) and the files it came from. Several
+    applicable sidecars in one folder (ambiguous in BIDS) are applied fewest entities first, with a warning."""
     ents = entities(path.name)
     root = _dataset_root(path, input_root)
     dirs = []
@@ -74,6 +76,9 @@ def sidecar(path: Path, suffix: str, input_root: Path | None) -> tuple[dict, lis
             je = entities(jn) if "_" in jn else {}
             if all(ents.get(k) == v for k, v in je.items()):
                 cands.append((len(je), j))
+        if len(cands) > 1 and warn is not None:
+            warn.append(f"{path.name}: {len(cands)} applicable _{suffix}.json sidecars in one folder "
+                        f"({', '.join(sorted(c[1].name for c in cands))}): applied fewest entities first")
         for _, j in sorted(cands):
             try:
                 meta.update(json.loads(j.read_text(encoding="utf-8")))
@@ -83,7 +88,8 @@ def sidecar(path: Path, suffix: str, input_root: Path | None) -> tuple[dict, lis
     return meta, used
 
 
-def _read_table(path: Path, ncol: int) -> list[np.ndarray]:
+def _read_table(path: Path, ncol: int, keep64: set[int]) -> list[np.ndarray]:
+    """Columns as float32 (signals), except those in keep64 (time stamps, an OnsetSource), kept as float64."""
     import pandas as pd
 
     cols: list[list[np.ndarray]] = [[] for _ in range(ncol)]
@@ -93,7 +99,7 @@ def _read_table(path: Path, ncol: int) -> list[np.ndarray]:
         if chunk.shape[1] != ncol:
             raise ValueError(f"{path.name}: {chunk.shape[1]} columns, the sidecar's Columns names {ncol}")
         for j in range(ncol):
-            cols[j].append(chunk.iloc[:, j].to_numpy(dtype=np.float32))
+            cols[j].append(chunk.iloc[:, j].to_numpy(dtype=np.float64 if j in keep64 else np.float32))
     return [np.concatenate(c) if c else np.zeros(0, np.float32) for c in cols]
 
 
@@ -117,13 +123,17 @@ def read(path: Path, fmt: str, ctx) -> list:
     files = sorted(p for p in path.parent.iterdir() if (m := FILE_RX.match(p.name)) and m.group("base") == base)
     input_root = getattr(ctx, "input_root", None)
     parts = []
+    warn: list[str] = []
     for f in files:
         m = FILE_RX.match(f.name)
-        meta, used = sidecar(f, m.group("suffix"), input_root)
+        meta, used = sidecar(f, m.group("suffix"), input_root, warn)
         missing = [k for k in ("Columns", "SamplingFrequency") if k not in meta]
         if missing:
             raise Skip(f"{f.name}: no {' or '.join(missing)} in any applicable _{m.group('suffix')}.json sidecar "
                        "(BIDS requires one)")
+        if "StartTime" not in meta:
+            warn.append(f"{f.name}: no StartTime in its sidecar (BIDS requires it): 0 assumed, so its timing "
+                        "relative to the run's events is unknown")
         parts.append((f, m.group("suffix"), m.group("rec") or "", meta, used))
     t0 = min(float(p[3].get("StartTime", 0.0) or 0.0) for p in parts)
     rec = SourceRecording(path=path, source_format="bids-physio")
@@ -139,7 +149,11 @@ def read(path: Path, fmt: str, ctx) -> list:
         names = [str(c) for c in meta["Columns"]]
         fs = float(meta["SamplingFrequency"])
         start = float(meta.get("StartTime", 0.0) or 0.0) - t0
-        data = _read_table(f, len(names))
+        ev = f.with_name(f.name.replace(f"_{suffix}.tsv", "_physioevents.tsv"))
+        emeta = sidecar(ev, "physioevents", input_root)[0] if ev.is_file() else {}
+        keep64 = {j for j, nm in enumerate(names) if nm.strip().lower() in TIME_NAMES or nm.strip().lower() == "timestamp"
+                  or nm == emeta.get("OnsetSource")}
+        data = _read_table(f, len(names), keep64)
         rec.notes.append(f"{f.name}: {len(names)} column(s) at {fs:g} Hz, StartTime {meta.get('StartTime', 0)} s; "
                          f"sidecar(s): {', '.join(used)}")
         for name, x in zip(names, data):
@@ -157,21 +171,21 @@ def read(path: Path, fmt: str, ctx) -> list:
             elif low == "trigger" and suffix == "physio":
                 sig.type_hint, sig.type_note = "other", "BIDS scanner trigger (volume timing, not a stimulation)"
             elif suffix == "stim":
-                from processor.channels import type_by_name
-                if type_by_name(name) is None:
-                    sig.type_hint, sig.type_note = "stim", "column of a BIDS _stim file"
+                # a BIDS _stim file is the presented stimulus (audio, luminance), not nerve stimulation
+                if re.search(r"(?<![a-z])(trig(?:ger)?|ttl|stim\w*)(?![a-z])", low):
+                    sig.type_hint, sig.type_note = "stim", "trigger column of a BIDS _stim file"
+                else:
+                    sig.type_hint, sig.type_note = "other", "column of a BIDS _stim file (the presented stimulus)"
             rec.signals.append(sig)
         # physiology events of this file
-        ev = f.with_name(f.name.replace(f"_{suffix}.tsv", "_physioevents.tsv"))
         if ev.is_file():
-            emeta, _ = sidecar(ev, "physioevents", input_root)
             ecols = [str(c) for c in emeta.get("Columns", ["onset", "duration", "trial_type", "message"])]
             df = pd.read_csv(ev, sep="\t", header=None, names=ecols, na_values=["n/a"], compression="infer")
             src = emeta.get("OnsetSource")
             for _, r in df.iterrows():
                 on = float(r["onset"])
                 if src and src in names:   # onset is a value of a column of the physio file (a device timestamp)
-                    col = data[names.index(src)].astype(np.float64)
+                    col = data[names.index(src)]
                     on = start + float(np.searchsorted(col, on)) / fs
                 else:
                     on = on - t0
@@ -196,6 +210,7 @@ def read(path: Path, fmt: str, ctx) -> list:
                 rec.markers.append(Marker(float(r["onset"]) - t0, du if du and du > 0 else None, lab, "marker",
                                           {"channel_name": evf.name}))
             rec.notes.append(f"task events from {evf.name}: {len(df)}")
+    rec.notes.extend(f"WARNING: {w}" for w in warn)
     if t0 != 0:
         rec.notes.append(f"BIDS time 0 (the run's first neural sample) is at {-t0:g} s of this recording")
     if not rec.signals:

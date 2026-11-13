@@ -1,9 +1,12 @@
 # Third-party components
 
-The Docker image bundles these Python packages (exact versions in `requirements.txt`), installed from PyPI
-wheels on `python:3.12.16-slim-bookworm` (Debian bookworm with CPython 3.12, PSF licence). No datasets or model
-weights are bundled. Left out on purpose: aiohttp/requests (network access, never used), soundfile (FLAC-coded
-WFDB signal files only; it bundles libsndfile, LGPL), docopt (bioread's command-line tools only).
+The Docker image is built on `python:3.12.16-slim-bookworm`: Debian 12 (bookworm) packages, each under its own
+licence (mostly GPL, LGPL, BSD and MIT; the per-package terms are in the image at
+`/usr/share/doc/<package>/copyright`), with CPython 3.12 (PSF-2.0) on top. It bundles these Python packages
+(exact versions in `requirements.txt`), installed from PyPI wheels, and the native libraries listed after
+them. No datasets or model weights are bundled. Left out on purpose: aiohttp/requests (network access, never
+used), soundfile (FLAC-coded WFDB signal files only; it bundles libsndfile, LGPL), docopt (bioread's
+command-line tools only).
 
 | Component | Version | Authors / copyright holder | Licence | URL |
 |---|---|---|---|---|
@@ -47,6 +50,34 @@ WFDB signal files only; it bundles libsndfile, LGPL), docopt (bioread's command-
 | tqdm | 4.70.1 | tqdm developers | MPL-2.0 AND MIT | https://github.com/tqdm/tqdm |
 | typing_extensions | 4.16.0 | Python Software Foundation | PSF-2.0 | https://github.com/python/typing_extensions |
 | tzdata | 2026.6 | Paul Ganssle, Stan Ulbrych (IANA time zone data, public domain) | Apache-2.0 | https://github.com/python/tzdata |
+
+## Native libraries inside the wheels
+
+| Library | Shipped in | Copyright holder | Licence |
+|---|---|---|---|
+| OpenBLAS (scipy-openblas) | NumPy, SciPy | Zhang Xianyi, the OpenBLAS project | BSD-3-Clause |
+| libgfortran (GCC runtime) | NumPy, SciPy | Free Software Foundation | GPL-3.0-or-later WITH GCC-exception-3.1 |
+| libquadmath | NumPy, SciPy | Free Software Foundation | LGPL-2.1-or-later |
+| HDF5, libhdf5_hl | h5py | The HDF Group; Board of Trustees of the University of Illinois | HDF5 licence (BSD-3-Clause style) |
+| libaec, libsz (libaec's SZIP-compatible library) | h5py | Deutsches Klimarechenzentrum (DKRZ) and libaec authors | BSD-2-Clause |
+| LZF filter, PyTables and stdint code | h5py | Andrew Collette; Francesc Altet; Alexander Chemeris | BSD-2-Clause; BSD-3-Clause; BSD-3-Clause |
+| EDFlib | pyEDFlib | Teunis van Beelen | BSD-3-Clause |
+| FreeType | Pillow, Matplotlib | The FreeType Project | FTL OR GPL-2.0-or-later (used under the FTL) |
+| HarfBuzz | Pillow, Matplotlib | HarfBuzz authors | MIT-Modern-Variant |
+| libraqm, SheenBidi | Matplotlib | their authors | MIT; Apache-2.0 |
+| libjpeg (IJG/libjpeg-turbo) | Pillow | Independent JPEG Group; libjpeg-turbo authors | IJG License, BSD-3-Clause, Zlib |
+| libpng | Pillow | Cosmin Truta, Glenn Randers-Pehrson and contributors | libpng License |
+| libtiff, liblcms2, libopenjp2, libwebp, libavif, libsharpyuv, libbrotli, liblzma, libzstd, libxcb, libXau | Pillow | their authors | libtiff (BSD-like), MIT, BSD-2-Clause, BSD-3-Clause, BSD-2-Clause, BSD-3-Clause, MIT, 0BSD/public domain, BSD-3-Clause, MIT, MIT |
+| Qhull | Matplotlib | C.B. Barber and The Geometry Center | Qhull licence |
+| DejaVu fonts | Matplotlib | Bitstream, Inc.; DejaVu changes public domain | Bitstream Vera licence |
+| STIX fonts | Matplotlib | STI Pub Companies | SIL OFL 1.1 |
+| Computer Modern (BaKoMa) fonts | Matplotlib | Basil K. Malyshev | BaKoMa Fonts Licence |
+| Last Resort font | Matplotlib | its authors | OFL-1.1 |
+| ColorBrewer schemes, Solarized, Qt4 editor, JSXTools | Matplotlib | Cynthia Brewer, Mark Harrower and The Pennsylvania State University; Ethan Schoonover; their authors | Apache-2.0; MIT; MIT; CC0-1.0 |
+
+Credit lines these licences ask for: "Portions of this software are copyright © The FreeType Project
+(www.freetype.org). All rights reserved." "This software is based in part on the work of the Independent
+JPEG Group."
 
 Test-only (not in the image): pytest (MIT); pyabf 2.3.8 (Scott W Harden, MIT) writes the ABF1 file of the
 synthetic fixture. The fixture's EDF+, WFDB and LabChart-style MATLAB files are written by this repository's own

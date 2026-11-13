@@ -126,6 +126,8 @@ def test_hdf5_trials_overlaps_parameters(run):
     rid = t["recording_id"]
     assert run["recs"][rid]["n_segments"] == str(t["n_segments"])
     assert run["recs"][rid]["start_time"] == "2023-11-14T22:13:20"
+    assert run["recs"][rid]["start_time_tz"] == "UTC"
+    assert run["recs"]["sub-h01_ses-1_rec-physio"]["start_time_tz"] == "local"
     nwb, ts, ecg, times, io = nwb_series(run, rid, "ecg")
     assert ecg.size == t["ecg_samples"]          # overlapping windows written once
     assert np.all(np.diff(times) > 0)
@@ -135,6 +137,8 @@ def test_hdf5_trials_overlaps_parameters(run):
     assert len(st) == t["n_trials"]
     assert list(st["current_uA"]) == [p["current_uA"] for p in t["trial_params"]]
     assert set(st["polarity"]) == {"cathodic"}
+    ch = run["chans"][rid]
+    assert ch["ecg-2"]["derived_from"] == "ecg" and ch["ecg"]["derived_from"] == ""   # processed_ecg is a copy
     # the channels with the same time base share one timestamps dataset
     assert nwb.acquisition["stim"].timestamps is nerve.timestamps or \
         nwb.acquisition["stim"].timestamp_link
@@ -187,7 +191,7 @@ def test_tables_provenance_summary(run):
     head = open(run["physio"] / "recordings.csv").readline().strip().split(",")
     assert head == ["recording_id", "subject", "session", "label", "path", "species", "start_time", "duration_s",
                     "recorded_s", "n_segments", "channel_types", "source_format", "source_path", "metadata_source",
-                    "age", "sex", "task", "run"]
+                    "age", "sex", "task", "run", "start_time_tz"]
     prov = run["prov"]
     for k in ("app", "version", "variant", "tools", "parameters", "inputs", "started", "finished", "wall_seconds",
               "peak_rss_mb", "threads", "recordings", "citations", "licence_notice"):
@@ -235,6 +239,10 @@ def test_exit_codes(tmp_path):
     ("neural/record1", "record1", "nerve"), ("Vagus cuff", "", "nerve"), ("RESP", "", "resp"), ("Airflow", "", "resp"),
     ("Pleth", "", "ppg"), ("Bladder pressure", "", "pressure"), ("EMG gastric", "", "emg"), ("Temp", "", "temp"),
     ("heart sound", "", None), ("capacity", "", None),
+    ("Pulse", "", "ppg"), ("Finger Pulse", "", "ppg"), ("Pulse Ox", "", "ppg"), ("stim pulse", "", "stim"),
+    ("pulse train", "", "stim"), ("response", "", None), ("Responder", "", None), ("CVP", "", "pressure"),
+    ("LVP", "", "pressure"), ("Left ventricular pressure", "", "pressure"), ("Venous pressure", "", "pressure"),
+    ("Pressure 1", "", "pressure"), ("Arterial pressure", "", "bp"), ("PAP", "", "pressure"),
 ])
 def test_name_heuristics(name, leaf, typ):
     assert C.type_by_name(name, leaf) == typ
@@ -246,6 +254,8 @@ def test_calibration():
     c = C.calibrate("bp", "V")
     assert not c.calibrated and c.unit == "V"
     assert not C.calibrate("ecg", "").calibrated
+    assert not C.calibrate("pressure", "V").calibrated and C.calibrate("pressure", "cmH2O").calibrated
+    assert C.is_derived("ecg/processed_ecg", "processed_ecg") and not C.is_derived("ECG II")
     assert C.calibrate("ecg", "", "mV", 0.5).scale == pytest.approx(5e-4)
 
 

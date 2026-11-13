@@ -30,27 +30,45 @@ def _rx(*alts: str) -> re.Pattern:
     return re.compile("|".join(f"{_B}(?:{a}){_E}" for a in alts), re.IGNORECASE)
 
 
-# Checked in this order; the first that matches wins.
+# Checked in this order on whole tokens; the first that matches wins (conventions.md, "channels.csv and channel
+# types").
 HEURISTICS: list[tuple[str, re.Pattern]] = [
-    # other pressures before arterial pressure: 'bladder pressure' is not a blood pressure
-    ("pressure", _rx(r"(?:bladder|vesical|intravesical|detrusor|gastric|airway|tracheal|esophageal|oesophageal|"
-                     r"rectal|abdominal|intra-?abdominal|urethral|colonic|ventricular)[ _-]?(?:pressure|press|p)",
-                     r"cmh2o", r"lvp", r"pves", r"pdet", r"pabd")),
+    # pressures that are not arterial first: venous, ventricular, atrial, pulmonary, organ pressures
+    ("pressure", _rx(r"(?:central[ _-]?)?venous(?:[ _-]?pressure)?", r"(?:left|right)?[ _-]?ventricular(?:[ _-]?pressure)?",
+                     r"(?:left|right)?[ _-]?atrial(?:[ _-]?pressure)?", r"pulmonary(?:[ _-]?\w+)*[ _-]?pressure",
+                     r"cvp", r"lvp", r"rvp", r"pap", r"lap", r"rap", r"jvp", r"pcwp", r"lvedp",
+                     r"(?:bladder|vesical|intravesical|detrusor|gastric|airway|tracheal|esophageal|oesophageal|"
+                     r"rectal|abdominal|intra-?abdominal|urethral|colonic|intracranial|pleural)[ _-]?(?:pressure|press|p)",
+                     r"icp", r"cmh2o", r"pves", r"pdet", r"pabd")),
     # heart rate before ECG: "HR (ECG)" is a rate derived from the ECG, not an ECG
     ("hr", _rx(r"hr", r"heart[ _-]?rate", r"bpm", r"pulse[ _-]?rate")),
-    ("ecg", _rx(r"ecg\d*", r"ekg\d*", r"lead[ _-]?(?:i{1,3}|avr|avl|avf|v[1-6])", r"(?:raw|processed)?[ _-]?ecg")),
-    ("bp", _rx(r"bp", r"abp", r"art", r"nibp", r"finapres", r"map", r"sbp", r"dbp", r"blood[ _-]?pressure",
-               r"arterial[ _-]?pressure", r"pressure", r"press", r"fap", r"bpw")),
-    ("resp", _rx(r"resp\w*", r"breath\w*", r"thorax", r"thoracic", r"abdomen", r"airflow", r"pneumo\w*",
-                 r"plethysmo\w*", r"spirom\w*", r"rip", r"co2", r"etco2", r"thermistor")),
-    ("ppg", _rx(r"ppg", r"pleth", r"photopleth\w*")),
+    ("ecg", _rx(r"ecg\d*", r"ekg\d*", r"lead[ _-]?(?:i{1,3}|avr|avl|avf|v[1-6])")),
+    ("bp", _rx(r"bp", r"abp", r"art", r"nibp", r"finapres", r"map", r"sbp", r"dbp", r"fap", r"bpw",
+               r"blood[ _-]?pressure", r"arterial[ _-]?(?:blood[ _-]?)?pressure", r"aortic[ _-]?pressure")),
+    # an unspecified pressure ('Pressure 1') is not assumed arterial
+    ("pressure", _rx(r"pressure", r"press")),
+    ("resp", _rx(r"resp", r"respiration", r"respiratory", r"breath", r"breaths", r"breathing", r"thorax", r"thoracic",
+                 r"abdomen", r"airflow", r"pneumo(?:tach|tachograph|graph)?", r"plethysmograph(?:y)?", r"spirometer",
+                 r"spirometry", r"rip", r"co2", r"etco2", r"thermistor")),
     # EMG before stimulation: "EMG during stimulation" is an EMG
     ("emg", _rx(r"emg\d*", r"muscle")),
-    ("stim", _rx(r"stim\w*", r"trig(?:ger)?s?", r"ttl", r"marker", r"pulse", r"stimamp", r"ctrlamp", r"sync")),
-    ("nerve", _rx(r"eng", r"nerve", r"vagus", r"vagal", r"cuff", r"cap", r"cnap", r"ecap", r"neural", r"neurogram", r"msna",
-                  r"sna", r"rsna", r"ssna")),
+    # stimulation before pulse: "stim pulse" and "pulse train" are stimulation, a bare "pulse" is a PPG
+    ("stim", _rx(r"stim\w*", r"trig(?:ger)?s?", r"ttl", r"marker", r"pulse[ _-]?train", r"stimamp", r"ctrlamp",
+                 r"sync")),
+    ("ppg", _rx(r"ppg", r"pleth", r"photopleth\w*", r"pulse", r"pulse[ _-]?ox(?:imeter|imetry)?", r"finger[ _-]?pulse",
+                r"spo2[ _-]?pleth")),
+    ("nerve", _rx(r"eng", r"nerve", r"vagus", r"vagal", r"cuff", r"cap", r"cnap", r"ecap", r"neural", r"neurogram",
+                  r"msna", r"sna", r"rsna", r"ssna")),
     ("temp", _rx(r"temp(?:erature)?", r"thermo(?:meter|couple)?")),
 ]
+# A processed copy of another channel keeps its type and gets channels.csv derived_from
+DERIVED = _rx(r"processed", r"filtered", r"filt", r"clean", r"cleaned", r"smoothed", r"rectified", r"integrated",
+              r"envelope", r"derived", r"differentiated")
+
+
+def is_derived(original: str, leaf: str = "") -> bool:
+    return bool(DERIVED.search(leaf or original) or DERIVED.search(original))
+
 
 # NWB unit per type and how to reach it from the units sources use
 VOLT = {"v": 1.0, "volt": 1.0, "volts": 1.0, "mv": 1e-3, "millivolt": 1e-3, "millivolts": 1e-3,
@@ -180,6 +198,9 @@ def calibrate(ch_type: str, source_unit: str, user_unit: str = "", user_scale: f
             return Calibration("cmH2O", scale0, True, note)
         if key in MMHG:
             return Calibration("mmHg", scale0 * MMHG[key], True, note)
+        if key in VOLT:  # a transducer's output voltage, not a pressure
+            return Calibration("V", scale0 * VOLT[key], False,
+                               (note + "; " if note else "") + "pressure transducer output in volts: not calibrated")
     if not key or key in ("a.u.", "au", "arb", "none", "-", "n/a"):
         return Calibration("a.u.", scale0, False, note or "no physical unit in the source")
     if key in VOLT:  # a voltage on a channel of another type: volts, spelled V

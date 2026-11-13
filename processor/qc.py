@@ -13,6 +13,7 @@ Per-channel checks and the overview figure, computed in one streaming pass over 
 from __future__ import annotations
 
 import math
+import warnings
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -102,12 +103,11 @@ class ChannelStats:
         k = n // w
         if k:
             blk = x[: k * w].reshape(k, w)
-            with np.errstate(invalid="ignore"):
-                ok = np.isfinite(blk).all(axis=1)
-                ptp = np.nanmax(blk, axis=1) - np.nanmin(blk, axis=1) if ok.any() else np.array([])
-            if ok.any():
+            ok = np.isfinite(blk).all(axis=1)
+            if ok.any():  # only windows without missing samples (no all-NaN reductions)
+                full = blk[ok]
                 self.win_total += int(ok.sum())
-                self.win_flat += int(np.count_nonzero(ptp[ok] == 0))
+                self.win_flat += int(np.count_nonzero(full.max(axis=1) - full.min(axis=1) == 0))
         # envelope
         if self.span > 0:
             bi = np.clip((t / self.span * N_BINS).astype(np.int64), 0, N_BINS - 1)
@@ -257,7 +257,8 @@ def decimate_minmax(t: np.ndarray, v: np.ndarray, n_out: int = 4000) -> tuple[np
     m = v.size // k
     vv = v[: m * k].reshape(m, k)
     tt = t[: m * k].reshape(m, k)[:, 0]
-    with np.errstate(invalid="ignore"):
+    with warnings.catch_warnings():  # all-missing stretches (gaps) give NaN, drawn as a gap
+        warnings.simplefilter("ignore", RuntimeWarning)
         lo, hi = np.nanmin(vv, axis=1), np.nanmax(vv, axis=1)
     return np.repeat(tt, 2), np.column_stack([lo, hi]).reshape(-1)
 

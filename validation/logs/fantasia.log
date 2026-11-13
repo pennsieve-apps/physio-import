@@ -1,23 +1,21 @@
 === fantasia: /Users/joostw/code/pennsieve/workflow-physiology/data/fantasia -> /Users/joostw/code/pennsieve/workflow-physiology/data/work/fantasia/physio-import
-2026-11-13 21:20:06,282 - INFO - physio-import 0.1.0: INPUT_DIR=/tmp/s/input OUTPUT_DIR=/tmp/s/output threads=1 (THREADS=0: 1 CPU(s) (cgroup CPU quota 1); cgroup memory limit 3072 MB fits 8 at ~300 MB each + 600 MB)
-2026-11-13 21:20:06,517 - INFO - not recordings (ignored): .dat x6, .ecg x6
-2026-11-13 21:20:06,517 - INFO - 8 source file(s) to read
-2026-11-13 21:20:06,517 - INFO - [1/8] fantasia/LICENSE.txt (txt)
-2026-11-13 21:20:06,543 - WARNING - fantasia/LICENSE.txt: skipped: only 2 rows: not a recording
-2026-11-13 21:20:06,544 - INFO - [2/8] fantasia/SHA256SUMS.txt (txt)
-2026-11-13 21:20:06,546 - WARNING - fantasia/SHA256SUMS.txt: skipped: no time column (Time, t, Time (s), ...) and SAMPLING_RATE not set
-2026-11-13 21:20:06,546 - INFO - [3/8] fantasia/f1o01.hea (wfdb)
-2026-11-13 21:20:08,964 - INFO - sub-f1o01_rec-wfdb: 2 channel(s) [resp=RESP, ecg=ECG], 7251.6 s (7251.6 s recorded, 1 segment(s)), 7169 marker(s); written in 1.3s, 2.3s in total
-2026-11-13 21:20:08,979 - INFO - [4/8] fantasia/f1y01.hea (wfdb)
-2026-11-13 21:20:10,247 - INFO - sub-f1y01_rec-wfdb: 2 channel(s) [resp=RESP, ecg=ECG], 7225.1 s (7225.1 s recorded, 1 segment(s)), 8710 marker(s); written in 0.7s, 1.2s in total
-2026-11-13 21:20:10,266 - INFO - [5/8] fantasia/f2o01.hea (wfdb)
-2026-11-13 21:20:11,646 - INFO - sub-f2o01_rec-wfdb: 3 channel(s) [resp=RESP, ecg=ECG, bp=BP], 7011.2 s (7011.2 s recorded, 1 segment(s)), 7236 marker(s); written in 0.7s, 1.4s in total
-2026-11-13 21:20:11,662 - INFO - [6/8] fantasia/f2o02.hea (wfdb)
-2026-11-13 21:20:13,148 - INFO - sub-f2o02_rec-wfdb: 3 channel(s) [resp=RESP, ecg=ECG, bp=BP], 7029.9 s (7029.9 s recorded, 1 segment(s)), 6372 marker(s); written in 0.7s, 1.4s in total
-2026-11-13 21:20:13,162 - INFO - [7/8] fantasia/f2y01.hea (wfdb)
-/processor/processor/qc.py:107: RuntimeWarning: All-NaN slice encountered
-  ptp = np.nanmax(blk, axis=1) - np.nanmin(blk, axis=1) if ok.any() else np.array([])
-2026-11-13 21:20:14,813 - INFO - sub-f2y01_rec-wfdb: 3 channel(s) [resp=RESP, ecg=ECG, bp=BP], 7074.5 s (7074.5 s recorded, 1 segment(s)), 8106 marker(s); written in 0.9s, 1.6s in total
-2026-11-13 21:20:14,831 - INFO - [8/8] fantasia/f2y02.hea (wfdb)
-2026-11-13 21:20:16,414 - INFO - sub-f2y02_rec-wfdb: 3 channel(s) [resp=RESP, ecg=ECG, bp=BP], 7034.6 s (7034.6 s recorded, 1 segment(s)), 6574 marker(s); written in 0.8s, 1.6s in total
-2026-11-13 21:20:16,558 - INFO - 6 recording(s) written, 0 failed, 2 file(s) skipped in 10.3s, peak memory 317 MB
+2026-11-13 21:40:01,370 - INFO - physio-import 0.1.0: INPUT_DIR=/tmp/s/input OUTPUT_DIR=/tmp/s/output threads=1 (THREADS=0: 1 CPU(s) (cgroup CPU quota 1); cgroup memory limit 3072 MB fits 8 at ~300 MB each + 600 MB)
+2026-11-13 21:40:01,576 - INFO - not recordings (ignored): .dat x6, .ecg x6
+2026-11-13 21:40:01,576 - INFO - 8 source file(s) to read
+2026-11-13 21:40:01,576 - INFO - [1/8] fantasia/LICENSE.txt (txt)
+2026-11-13 21:40:01,604 - WARNING - fantasia/LICENSE.txt: skipped: only 2 rows: not a recording
+2026-11-13 21:40:01,604 - INFO - [2/8] fantasia/SHA256SUMS.txt (txt)
+2026-11-13 21:40:01,607 - WARNING - fantasia/SHA256SUMS.txt: skipped: no time column (Time, t, Time (s), ...) and SAMPLING_RATE not set
+2026-11-13 21:40:01,607 - INFO - [3/8] fantasia/f1o01.hea (wfdb)
+2026-11-13 21:40:04,292 - INFO - sub-f1o01_rec-wfdb: 2 channel(s) [resp=RESP, ecg=ECG], 7251.6 s (7251.6 s recorded, 1 segment(s)), 7169 marker(s); written in 1.3s, 2.6s in total
+2026-11-13 21:40:04,309 - INFO - [4/8] fantasia/f1y01.hea (wfdb)
+2026-11-13 21:40:05,642 - INFO - sub-f1y01_rec-wfdb: 2 channel(s) [resp=RESP, ecg=ECG], 7225.1 s (7225.1 s recorded, 1 segment(s)), 8710 marker(s); written in 0.8s, 1.3s in total
+2026-11-13 21:40:05,660 - INFO - [5/8] fantasia/f2o01.hea (wfdb)
+2026-11-13 21:40:07,073 - INFO - sub-f2o01_rec-wfdb: 3 channel(s) [resp=RESP, ecg=ECG, bp=BP], 7011.2 s (7011.2 s recorded, 1 segment(s)), 7236 marker(s); written in 0.8s, 1.4s in total
+2026-11-13 21:40:07,090 - INFO - [6/8] fantasia/f2o02.hea (wfdb)
+2026-11-13 21:40:08,493 - INFO - sub-f2o02_rec-wfdb: 3 channel(s) [resp=RESP, ecg=ECG, bp=BP], 7029.9 s (7029.9 s recorded, 1 segment(s)), 6372 marker(s); written in 0.7s, 1.3s in total
+2026-11-13 21:40:08,507 - INFO - [7/8] fantasia/f2y01.hea (wfdb)
+2026-11-13 21:40:10,565 - INFO - sub-f2y01_rec-wfdb: 3 channel(s) [resp=RESP, ecg=ECG, bp=BP], 7074.5 s (7074.5 s recorded, 1 segment(s)), 8106 marker(s); written in 1.0s, 2.0s in total
+2026-11-13 21:40:10,587 - INFO - [8/8] fantasia/f2y02.hea (wfdb)
+2026-11-13 21:40:12,223 - INFO - sub-f2y02_rec-wfdb: 3 channel(s) [resp=RESP, ecg=ECG, bp=BP], 7034.6 s (7034.6 s recorded, 1 segment(s)), 6574 marker(s); written in 0.8s, 1.6s in total
+2026-11-13 21:40:12,366 - INFO - 6 recording(s) written, 0 failed, 2 file(s) skipped in 11.0s, peak memory 324 MB

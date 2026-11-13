@@ -15,7 +15,8 @@ Borders project (https://github.com/NeurodataWithoutBorders; Rübel et al. 2022)
 NWB. Pennsieve packages these tools; it did not develop them. BIDS physiological recordings are read
 as the BIDS specification (BIDS contributors; Gorgolewski et al. 2016) defines them. The demo data
 are by Oliver Armitage and colleagues (Pennsieve Discover 349), Shane A. Bender and colleagues
-(Discover 655), M. Khawar Ali and colleagues (Discover 406), Nikhil Iyengar and colleagues (PhysioNet
+(Discover 655), M. Khawar Ali and colleagues (Discover 406), Matthew Ward and colleagues (Discover 9),
+Nikhil Iyengar and colleagues (PhysioNet
 Fantasia), Andy Schumann and Karl-Jürgen Bär (PhysioNet Autonomic Aging), Tae-Ho Lee, Mara Mather and
 colleagues (OpenNeuro ds001242) and Elizabeth DuPre, Wen-Ming Luh and R. Nathan Spreng (OpenNeuro
 ds000210).
@@ -62,6 +63,7 @@ NWB Inspector (with PyNWB schema validation). The contract is
 | CSV, TSV, TXT, XLSX | pandas, openpyxl | a time column (`Time`, `t`, `Time (s)`, `Time (ms)`, ... or `TIME_COLUMN`) or `SAMPLING_RATE`; numeric columns are channels, `ECG (mV)`/`ECG [mV]` give units; empty cells are gaps (NaN, never zero); text columns are markers; LabChart text exports (`Interval=`, `ChannelTitle=`, `#*` comments) are recognised |
 | WAV | SciPy | channels `channel 1`, ... uncalibrated; type them with `channels-map.csv` |
 | BIDS `_physio.tsv.gz`, `_stim.tsv.gz` | own reader (pandas) | below |
+| Excel 97-2003 `.xls` | not read | "save the sheet as .xlsx or CSV" (openpyxl reads .xlsx only) |
 | Spike2 `.smrx` | not read | "export as .smr or CSV from Spike2: the only .smrx reader, CED's sonpy, is closed-source" |
 | LabChart `.adicht` | not read | "export as .txt/.mat from LabChart: the only Linux reader is GPL" |
 
@@ -76,8 +78,9 @@ earliest sample, and the run's `_events.tsv` task events and `_physioevents.tsv.
 same timeline, so events stay aligned. `cardiac` is typed ECG when its `Description`/`LongName` or the
 recording label says ECG/EKG and PPG (pulse) otherwise, since MR scanners usually record a pulse
 oximeter; `respiratory` is respiration; `trigger` in a `_physio` file is the scanner's volume trigger and
-is typed `other`, not `stim`, so that stim-events does not mistake volumes for stimulation trains; in a
-`_stim` file unrecognised columns are `stim`. `sub`, `ses`, `task`, `acq`, `run` become the recording
+is typed `other`, not `stim`, so that stim-events does not mistake volumes for stimulation trains; a
+`_stim` file is the presented stimulus (audio, luminance), so its columns are `other` unless named
+trigger/TTL/stim. A missing `StartTime` (REQUIRED) and several sidecars in one folder are warnings. `sub`, `ses`, `task`, `acq`, `run` become the recording
 id (`sub-01_ses-1_rec-rest-run1`) and `task`/`run` columns of recordings.csv; `participants.tsv`
 gives species, sex and age. A dataset that holds only physio files works.
 
@@ -140,17 +143,23 @@ trials:                       # 2-D signals are trials x samples: one segment pe
 ## Outputs
 
 `recordings.csv`: `recording_id, subject, session, label, path, species, start_time, duration_s,
-recorded_s, n_segments, channel_types, source_format, source_path, metadata_source, age, sex, task, run`.
+recorded_s, n_segments, channel_types, source_format, source_path, metadata_source, age, sex, task, run,
+start_time_tz`.
 Ids are `sub-<subject>[_ses-<session>]_rec-<label>`; subject and session come from
 `recordings-map.csv`, then `sub-*`/`ses-*`/`perf-*` folders (or BIDS entities in the file name), then the
 file's own metadata, then the file stem; the label is the file stem without what the ids already say,
-or the format name (`sub-2_rec-hdf5`). `start_time` is the local wall clock without offset when known;
-Unix time stamps (HDF5) are written as UTC.
+or the format name (`sub-2_rec-hdf5`). `start_time` has no offset (as the conventions ask);
+`start_time_tz` says how to read it: `local` (a wall clock, e.g. EDF, WFDB, SDS performances), `UTC`
+(an instant, e.g. HDF5 Unix time stamps) or empty when there is no start time. `duration_s` and
+`recorded_s` come from the source's own sample times where it has them.
 
 `channels.csv`: `recording_id, channel` (`ecg`, `ecg-2`, `bp`, ...: the first channel of a type gets
 the bare type name), `type, original_name, unit, sampling_rate_hz, n_samples, calibrated, scale, site,
 typing` (`mapping`, `name`, `content` or `default`), `status` (`good`, `flat`, `saturated`, `noisy`),
-`status_description`.
+`status_description`, `derived_from` (a processed copy of another channel, by a name token such as
+`processed`, `filtered`, `rectified`, `envelope`: the raw channel it copies, or `unknown`; raw channels
+are named first, so Discover 349's `processed_ecg` is `ecg-2` with `derived_from=ecg`, not a second lead).
+A heart-rate channel without a unit is assumed to be in bpm; qc.csv says so (`unit_assumed`).
 
 `events.tsv`: the conventions' columns (`recording_id, onset, duration, trial_type, event_id, ...,
 label, source`) plus `annotator` and `marker_channel` when used. `trial_type` is `marker` (file markers,
@@ -182,15 +191,15 @@ includes the page cache of the files read.
 
 | Demo | Input | Recordings | Wall time | Peak memory | NWB written |
 |---|---|---|---|---|---|
-| Discover 349 (pig, HDF5) | 496 MB, 20 trials, ECG 1 kHz, HR 500 Hz, 2 nerve cuffs + stimulus line at 30 kHz | 1 | 6.3 s | 740 MB | 21 MB |
-| Discover 655 (rat, CSV) | 3 × 20–28 min at 1 kHz, 108 MB | 3 | 4.4 s | 471 MB | 10 MB |
-| Discover 406 (human, WAV) | 30 WAV (10 identical copies), 500 Hz | 20 | 10.7 s | 284 MB | 12 MB |
-| Fantasia (WFDB) | 6 × 2 h at 250 Hz, 44,167 beat annotations | 6 | 10.3 s | 317 MB | 35 MB |
-| Autonomic Aging (WFDB) | 3 × 15–32 min at 1 kHz | 3 | 4.1 s | 290 MB | 17 MB |
-| OpenNeuro ds000210 + ds001242 (BIDS) | 3 runs at 50 Hz; 1 run with ECG/resp/SCR at 10 kHz (3.6 M samples) + eye tracker | 4 | 5.8 s | 390 MB | |
+| Discover 349 (pig, HDF5) | 496 MB, 20 trials, ECG 1 kHz, HR 500 Hz, 2 nerve cuffs + stimulus line at 30 kHz | 1 | 5.8 s | 748 MB | 21 MB |
+| Discover 655 (rat, CSV) | 3 × 20–28 min at 1 kHz, 108 MB | 3 | 4.3 s | 487 MB | 10 MB |
+| Discover 406 (human, WAV) | 30 WAV (10 identical copies), 500 Hz | 20 | 9.4 s | 284 MB | 12 MB |
+| Fantasia (WFDB) | 6 × 2 h at 250 Hz, 44,167 beat annotations | 6 | 11.0 s | 324 MB | 35 MB |
+| Autonomic Aging (WFDB) | 3 × 15–32 min at 1 kHz | 3 | 4.1 s | 295 MB | 17 MB |
+| OpenNeuro ds000210 + ds001242 (BIDS) | 3 runs at 50 Hz; 1 run with ECG/resp/SCR at 10 kHz (3.6 M samples) + eye tracker | 4 | 5.5 s | 398 MB | |
 
 Chosen: 1 vCPU, 2048 MiB, 900 s (fits Lambda). Tables and `.mat` files are loaded whole (pandas held
-1.7 M rows × 4 columns of Discover 655 in about 470 MB); every other format is read a slice at a time.
+1.7 M rows × 4 columns of Discover 655 in about 490 MB); every other format is read a slice at a time.
 Image: 147 MB.
 
 ## Validation
@@ -266,7 +275,9 @@ lists in CITATION.cff.
   Complex Physiologic Signals. *Circulation* 101(23):e215-e220. doi:10.1161/01.CIR.101.23.e215, PMID 10851218.
 - Vack N, Ollinger J, Fitch D, Davison M (2020). uwmadison-chm/bioread. Zenodo.
   doi:10.5281/zenodo.3374011.
-- pyEDFlib (Holger Nahrstaedt and contributors), https://github.com/holgern/pyedflib; pymatreader
+- pyEDFlib (Holger Nahrstaedt, Simon Kern and contributors). holgern/pyedflib. Zenodo.
+  doi:10.5281/zenodo.3492211.
+- pymatreader
   (Dirk Gütlin, Thomas Hartmann), https://gitlab.com/obob/pymatreader; h5py (Andrew Collette and
   contributors), https://github.com/h5py/h5py; NWB Inspector, https://github.com/NeurodataWithoutBorders/nwbinspector.
 - Harris CR et al. (2020). Array programming with NumPy. *Nature* 585:357-362.
@@ -307,6 +318,11 @@ Demo data:
 - Lee T-H, Greening S, Ueno T, Clewett D, Ponzio A, Sakaki M, Mather M (2019). Examining effects of
   arousal on responses to salient and non-salient stimuli in younger and older adults. OpenNeuro.
   doi:10.18112/openneuro.ds001242.v1.0.0.
+  Lee T-H, Greening SG, Ueno T, Clewett D, Ponzio A, Sakaki M, Mather M (2018). Arousal increases neural
+  gain via the locus coeruleus–noradrenaline system in younger adults but not in older adults. *Nature
+  Human Behaviour* 2:356-366. doi:10.1038/s41562-018-0344-1, PMID 30320223. Mather M et al. (2017). Higher
+  locus coeruleus MRI contrast is associated with lower parasympathetic influence over heart rate
+  variability. *NeuroImage* 150:329-335. doi:10.1016/j.neuroimage.2017.02.025, PMID 28215623.
 - DuPre E, Luh W-M, Spreng RN. Multi-echo fMRI replication sample of autobiographical memory,
   prospection and theory of mind reasoning tasks. OpenNeuro ds000210, snapshot 00002,
   https://openneuro.org/datasets/ds000210/versions/00002.
@@ -314,9 +330,13 @@ Demo data:
 ## Acknowledgements
 
 Neo is developed by the NeuralEnsemble community; WFDB and PhysioNet by the MIT Laboratory for
-Computational Physiology; NWB, PyNWB and NWB Inspector by the Neurodata Without Borders project; bioread by the University of Wisconsin-Madison Center for Healthy Minds. The demo
-datasets on Pennsieve Discover were funded by the NIH SPARC program; please acknowledge the funders the
-datasets' own descriptions name.
+Computational Physiology; NWB, PyNWB and NWB Inspector by the Neurodata Without Borders project; bioread by the University of Wisconsin-Madison Center for Healthy Minds. Funding as
+the datasets' own descriptions name it (please acknowledge it when you use them): Discover 349, NIH
+OT2OD025349 and OT2OD030536; Discover 655, SPARC/NIH OT2OD025349, U41NS129436 (NINDS), R01HL162921 and
+R01HL150136 (NHLBI); Discover 406, NIH OT2OD025349 and UG3NS115108; Discover 9, NIH OT2OD025349 and
+OT2OD023847; OpenNeuro ds001242, the National Institute on Aging (RO1AG025340), JSPS KAKENHI (16H03750,
+15K21062, 16H05959, 16KT0002, 16H02053) and the European Commission (CIG618600); its authors ask users to
+cite Lee et al. 2018 and Mather et al. 2017 (below) and to acknowledge the OpenfMRI project.
 
 ## Development
 

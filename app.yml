@@ -34,7 +34,7 @@ application:
 runtime:
   # One recording at a time, each channel read a slice at a time (tables and .mat files are loaded whole).
   # Measured in Docker (amd64 emulation on an M-series Mac, --cpus 1 --memory 3g, read-only, any uid) on the five
-  # demo sources: peak 754 MB (cgroup memory.peak, page cache included) on the 496 MB pig HDF5, at most 10 s
+  # demo sources: peak 748 MB (cgroup memory.peak, page cache included) on the 496 MB pig HDF5, at most 11 s
   # per demo source (README "Runtime"). Single-threaded.
   cpu: 1024
   memory: 2048
