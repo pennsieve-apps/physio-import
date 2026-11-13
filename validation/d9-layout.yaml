@@ -1,0 +1,12 @@
+# Discover 9 (Ward et al.): epoched, averaged responses per stimulation (28 parameter combinations)
+files: "*_ephys_data.mat"
+signals:
+  - path: CNAP_avg
+    name: CNAP average
+    rate: FsIN
+  - path: EMG_DuringStim
+    name: gastric EMG during stimulation
+    rate: Fs_EMG
+trials:
+  gap_s: 1
+  parameters: [Ist, Qst, tst, PRF, TrainDur]

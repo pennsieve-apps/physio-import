@@ -1,0 +1,63 @@
+=== d406: /Users/joostw/code/pennsieve/workflow-physiology/data/discover-406 -> /Users/joostw/code/pennsieve/workflow-physiology/data/work/d406/physio-import
+2026-11-13 21:19:54,932 - INFO - physio-import 0.1.0: INPUT_DIR=/tmp/s/input OUTPUT_DIR=/tmp/s/output threads=1 (THREADS=0: 1 CPU(s) (cgroup CPU quota 1); cgroup memory limit 3072 MB fits 8 at ~300 MB each + 600 MB)
+2026-11-13 21:19:55,327 - INFO - config channels_map: channels-map.csv
+2026-11-13 21:19:55,327 - INFO - config sds: discover-406/files/performances.xlsx, discover-406/files/subjects.xlsx
+2026-11-13 21:19:55,327 - INFO - skipped discover-406/files/primary/sub-1001/perf-1001-A/01-A-2_-_Copy.wav: identical to discover-406/files/primary/sub-1001/perf-1001-A/01-A-2.wav
+2026-11-13 21:19:55,327 - INFO - skipped discover-406/files/primary/sub-1001/perf-1001-B/01-B-2_-_Copy.wav: identical to discover-406/files/primary/sub-1001/perf-1001-B/01-B-2.wav
+2026-11-13 21:19:55,328 - INFO - skipped discover-406/files/primary/sub-1001/perf-1001-C/01-C-2_-_Copy.wav: identical to discover-406/files/primary/sub-1001/perf-1001-C/01-C-2.wav
+2026-11-13 21:19:55,328 - INFO - skipped discover-406/files/primary/sub-1001/perf-1001-D/01-D-2_-_Copy.wav: identical to discover-406/files/primary/sub-1001/perf-1001-D/01-D-2.wav
+2026-11-13 21:19:55,328 - INFO - skipped discover-406/files/primary/sub-1001/perf-1001-E/01-E-2_-_Copy.wav: identical to discover-406/files/primary/sub-1001/perf-1001-E/01-E-2.wav
+2026-11-13 21:19:55,328 - INFO - skipped discover-406/files/primary/sub-1002/perf-1002-A/02-A-2_-_Copy.wav: identical to discover-406/files/primary/sub-1002/perf-1002-A/02-A-2.wav
+2026-11-13 21:19:55,328 - INFO - skipped discover-406/files/primary/sub-1002/perf-1002-B/02-B-2_-_Copy.wav: identical to discover-406/files/primary/sub-1002/perf-1002-B/02-B-2.wav
+2026-11-13 21:19:55,328 - INFO - skipped discover-406/files/primary/sub-1002/perf-1002-C/02-C-2_-_Copy.wav: identical to discover-406/files/primary/sub-1002/perf-1002-C/02-C-2.wav
+2026-11-13 21:19:55,328 - INFO - skipped discover-406/files/primary/sub-1002/perf-1002-D/02-D-2_-_Copy.wav: identical to discover-406/files/primary/sub-1002/perf-1002-D/02-D-2.wav
+2026-11-13 21:19:55,329 - INFO - skipped discover-406/files/primary/sub-1002/perf-1002-E/02-E-2_-_Copy.wav: identical to discover-406/files/primary/sub-1002/perf-1002-E/02-E-2.wav
+2026-11-13 21:19:55,329 - INFO - not recordings (ignored): .dat x10, .json x1, .md x2, .pdf x20
+2026-11-13 21:19:55,329 - INFO - 23 source file(s) to read
+2026-11-13 21:19:55,329 - INFO - [1/23] discover-406/files/README.txt (txt)
+2026-11-13 21:19:55,331 - WARNING - discover-406/files/README.txt: skipped: not a readable table: 'utf-8' codec can't decode byte 0xd2 in position 14: invalid continuation byte
+2026-11-13 21:19:55,332 - INFO - [2/23] discover-406/files/primary/sub-1001/perf-1001-A/01-A-1.wav (wav)
+2026-11-13 21:19:57,813 - INFO - sub-1001_ses-A_rec-01-A-1: 1 channel(s) [ecg=channel 1], 990.6 s (990.6 s recorded, 1 segment(s)), 0 marker(s); written in 1.0s, 2.4s in total
+2026-11-13 21:19:57,813 - INFO - [3/23] discover-406/files/primary/sub-1001/perf-1001-A/01-A-2.wav (wav)
+2026-11-13 21:19:58,231 - INFO - sub-1001_ses-A_rec-01-A-2: 1 channel(s) [ecg=channel 1], 320.1 s (320.1 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:19:58,231 - INFO - [4/23] discover-406/files/primary/sub-1001/perf-1001-A/RD.txt (txt)
+2026-11-13 21:19:58,475 - WARNING - discover-406/files/primary/sub-1001/perf-1001-A/RD.txt: skipped: no time column (Time, t, Time (s), ...) and SAMPLING_RATE not set
+2026-11-13 21:19:58,475 - INFO - [5/23] discover-406/files/primary/sub-1001/perf-1001-A/RD_A.mat (mat)
+2026-11-13 21:19:58,485 - WARNING - discover-406/files/primary/sub-1001/perf-1001-A/RD_A.mat: skipped: MATLAB layout not recognised (variables: ECG (160044,)): name the sampling rate 'fs' or the time vector 't', or describe the file in a layout.yaml
+2026-11-13 21:19:58,485 - INFO - [6/23] discover-406/files/primary/sub-1001/perf-1001-B/01-B-1.wav (wav)
+2026-11-13 21:19:58,942 - INFO - sub-1001_ses-B_rec-01-B-1: 1 channel(s) [ecg=channel 1], 955.5 s (955.5 s recorded, 1 segment(s)), 0 marker(s); written in 0.1s, 0.5s in total
+2026-11-13 21:19:58,942 - INFO - [7/23] discover-406/files/primary/sub-1001/perf-1001-B/01-B-2.wav (wav)
+2026-11-13 21:19:59,375 - INFO - sub-1001_ses-B_rec-01-B-2: 1 channel(s) [ecg=channel 1], 579.4 s (579.4 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:19:59,375 - INFO - [8/23] discover-406/files/primary/sub-1001/perf-1001-C/01-C-1.wav (wav)
+2026-11-13 21:19:59,823 - INFO - sub-1001_ses-C_rec-01-C-1: 1 channel(s) [ecg=channel 1], 970.6 s (970.6 s recorded, 1 segment(s)), 0 marker(s); written in 0.1s, 0.4s in total
+2026-11-13 21:19:59,823 - INFO - [9/23] discover-406/files/primary/sub-1001/perf-1001-C/01-C-2.wav (wav)
+2026-11-13 21:20:00,227 - INFO - sub-1001_ses-C_rec-01-C-2: 1 channel(s) [ecg=channel 1], 500.9 s (500.9 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:00,228 - INFO - [10/23] discover-406/files/primary/sub-1001/perf-1001-D/01-D-1.wav (wav)
+2026-11-13 21:20:00,650 - INFO - sub-1001_ses-D_rec-01-D-1: 1 channel(s) [ecg=channel 1], 940.6 s (940.6 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:00,650 - INFO - [11/23] discover-406/files/primary/sub-1001/perf-1001-D/01-D-2.wav (wav)
+2026-11-13 21:20:01,073 - INFO - sub-1001_ses-D_rec-01-D-2: 1 channel(s) [ecg=channel 1], 521.1 s (521.1 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:01,073 - INFO - [12/23] discover-406/files/primary/sub-1001/perf-1001-E/01-E-1.wav (wav)
+2026-11-13 21:20:01,428 - INFO - sub-1001_ses-E_rec-01-E-1: 1 channel(s) [ecg=channel 1], 999.9 s (999.9 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:01,428 - INFO - [13/23] discover-406/files/primary/sub-1001/perf-1001-E/01-E-2.wav (wav)
+2026-11-13 21:20:01,801 - INFO - sub-1001_ses-E_rec-01-E-2: 1 channel(s) [ecg=channel 1], 460.1 s (460.1 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:01,801 - INFO - [14/23] discover-406/files/primary/sub-1002/perf-1002-A/02-A-1.wav (wav)
+2026-11-13 21:20:02,203 - INFO - sub-1002_ses-A_rec-02-A-1: 1 channel(s) [ecg=channel 1], 935.9 s (935.9 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:02,204 - INFO - [15/23] discover-406/files/primary/sub-1002/perf-1002-A/02-A-2.wav (wav)
+2026-11-13 21:20:02,579 - INFO - sub-1002_ses-A_rec-02-A-2: 1 channel(s) [ecg=channel 1], 415.7 s (415.7 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:02,579 - INFO - [16/23] discover-406/files/primary/sub-1002/perf-1002-B/02-B-1.wav (wav)
+2026-11-13 21:20:02,923 - INFO - sub-1002_ses-B_rec-02-B-1: 1 channel(s) [ecg=channel 1], 926.2 s (926.2 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.3s in total
+2026-11-13 21:20:02,923 - INFO - [17/23] discover-406/files/primary/sub-1002/perf-1002-B/02-B-2.wav (wav)
+2026-11-13 21:20:03,310 - INFO - sub-1002_ses-B_rec-02-B-2: 1 channel(s) [ecg=channel 1], 405.5 s (405.5 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:03,310 - INFO - [18/23] discover-406/files/primary/sub-1002/perf-1002-C/02-C-1.wav (wav)
+2026-11-13 21:20:03,722 - INFO - sub-1002_ses-C_rec-02-C-1: 1 channel(s) [ecg=channel 1], 891.7 s (891.7 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:03,723 - INFO - [19/23] discover-406/files/primary/sub-1002/perf-1002-C/02-C-2.wav (wav)
+2026-11-13 21:20:04,094 - INFO - sub-1002_ses-C_rec-02-C-2: 1 channel(s) [ecg=channel 1], 660.3 s (660.3 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:04,094 - INFO - [20/23] discover-406/files/primary/sub-1002/perf-1002-D/02-D-1.wav (wav)
+2026-11-13 21:20:04,479 - INFO - sub-1002_ses-D_rec-02-D-1: 1 channel(s) [ecg=channel 1], 950.8 s (950.8 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:04,479 - INFO - [21/23] discover-406/files/primary/sub-1002/perf-1002-D/02-D-2.wav (wav)
+2026-11-13 21:20:04,847 - INFO - sub-1002_ses-D_rec-02-D-2: 1 channel(s) [ecg=channel 1], 518.2 s (518.2 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:04,848 - INFO - [22/23] discover-406/files/primary/sub-1002/perf-1002-E/02-E-1.wav (wav)
+2026-11-13 21:20:05,244 - INFO - sub-1002_ses-E_rec-02-E-1: 1 channel(s) [ecg=channel 1], 979.1 s (979.1 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:05,245 - INFO - [23/23] discover-406/files/primary/sub-1002/perf-1002-E/02-E-2.wav (wav)
+2026-11-13 21:20:05,622 - INFO - sub-1002_ses-E_rec-02-E-2: 1 channel(s) [ecg=channel 1], 506.2 s (506.2 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.4s in total
+2026-11-13 21:20:05,638 - INFO - 20 recording(s) written, 0 failed, 13 file(s) skipped in 10.7s, peak memory 284 MB

@@ -1,0 +1,13 @@
+2026-11-13 21:20:27,254 - INFO - physio-import 0.1.0: INPUT_DIR=/tmp/s/input OUTPUT_DIR=/tmp/s/output threads=1 (THREADS=0: 1 CPU(s) (cgroup CPU quota 1); cgroup memory limit 3072 MB fits 8 at ~300 MB each + 600 MB)
+2026-11-13 21:20:27,518 - INFO - config participants: ds000210/participants.tsv, ds001242/participants.tsv
+2026-11-13 21:20:27,518 - INFO - not recordings (ignored): (no extension) x4, .json x6
+2026-11-13 21:20:27,518 - INFO - 4 source file(s) to read
+2026-11-13 21:20:27,518 - INFO - [1/4] ds000210/sub-01/func/sub-01_task-cuedSGT_run-01_physio.tsv.gz (bids-physio)
+2026-11-13 21:20:29,545 - INFO - sub-01_rec-cuedSGT-run01: 2 channel(s) [ppg=cardiac, resp=respiratory], 520.0 s (520.0 s recorded, 1 segment(s)), 30 marker(s); written in 0.7s, 2.0s in total
+2026-11-13 21:20:29,545 - INFO - [2/4] ds000210/sub-01/func/sub-01_task-cuedSGT_run-02_physio.tsv.gz (bids-physio)
+2026-11-13 21:20:30,143 - INFO - sub-01_rec-cuedSGT-run02: 2 channel(s) [ppg=cardiac, resp=respiratory], 520.0 s (520.0 s recorded, 1 segment(s)), 30 marker(s); written in 0.1s, 0.6s in total
+2026-11-13 21:20:30,144 - INFO - [3/4] ds000210/sub-01/func/sub-01_task-rest_run-01_physio.tsv.gz (bids-physio)
+2026-11-13 21:20:30,640 - INFO - sub-01_rec-rest-run01: 2 channel(s) [ppg=cardiac, resp=respiratory], 612.0 s (612.0 s recorded, 1 segment(s)), 0 marker(s); written in 0.0s, 0.5s in total
+2026-11-13 21:20:30,641 - INFO - [4/4] ds001242/sub-01/func/sub-01_task-fearlearning_recording-EcgRespScr_physio.tsv.gz (bids-physio)
+2026-11-13 21:20:33,070 - INFO - sub-01_rec-fearlearning: 9 channel(s) [ecg=physio-EcgRespScr/cardiac, resp=physio-EcgRespScr/respiration, other=physio-EcgRespScr/scr, other-2=physio-EcgRespScr/trigger, stim=physio-EcgRespScr/marker, other-3=physio-eye/trigger, other-4=physio-eye/Pupil, other-5=physio-eye/X, other-6=physio-eye/Y], 361.2 s (361.2 s recorded, 1 segment(s)), 170 marker(s); written in 0.6s, 1.9s in total
+2026-11-13 21:20:33,084 - INFO - 4 recording(s) written, 0 failed, 0 file(s) skipped in 5.8s, peak memory 390 MB
