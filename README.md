@@ -258,12 +258,12 @@ lists in CITATION.cff.
   *eLife* 11:e78362. doi:10.7554/eLife.78362, PMID 36193886.
 - Garcia S, Guarino D, Jaillet F, Jennings T, Pröpper R, Rautenberg PL, Rodgers CC, Sobolev A,
   Wachtler T, Yger P, Davison AP (2014). Neo: an object model for handling electrophysiology data in
-  multiple formats. *Frontiers in Neuroinformatics* 8. doi:10.3389/fninf.2014.00010, PMID 24600386.
+  multiple formats. *Frontiers in Neuroinformatics* 8:10. doi:10.3389/fninf.2014.00010, PMID 24600386.
 - Xie C, McCullum L, Johnson A, Pollard T, Gow B, Moody B (2023). Waveform Database Software Package
   (WFDB) for Python. PhysioNet. doi:10.13026/9njx-6322.
 - Goldberger AL, Amaral LAN, Glass L, Hausdorff JM, Ivanov PCh, Mark RG, Mietus JE, Moody GB, Peng C-K,
-  Stanley HE (2000). PhysioBank, PhysioToolkit, and PhysioNet. *Circulation* 101(23).
-  doi:10.1161/01.CIR.101.23.e215, PMID 10851218.
+  Stanley HE (2000). PhysioBank, PhysioToolkit, and PhysioNet: Components of a New Research Resource for
+  Complex Physiologic Signals. *Circulation* 101(23):e215-e220. doi:10.1161/01.CIR.101.23.e215, PMID 10851218.
 - Vack N, Ollinger J, Fitch D, Davison M (2020). uwmadison-chm/bioread. Zenodo.
   doi:10.5281/zenodo.3374011.
 - pyEDFlib (Holger Nahrstaedt and contributors), https://github.com/holgern/pyedflib; pymatreader

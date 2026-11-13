@@ -24,7 +24,7 @@ WFDB signal files only; it bundles libsndfile, LGPL), docopt (bioread's command-
 | NumPy | 2.5.4 | NumPy Developers | BSD-3-Clause (bundled parts: 0BSD, MIT, Zlib, CC0-1.0) | https://numpy.org |
 | SciPy | 1.18.1 | SciPy Developers | BSD-3-Clause | https://scipy.org |
 | Matplotlib | 3.11.2 | Matplotlib Development Team | Matplotlib License (PSF-based) | https://matplotlib.org |
-| PyYAML | 6.0.3 | Kirill Simonov and contributors | MIT | https://github.com/yaml/pyyaml |
+| PyYAML | 6.0.3 | Ingy döt Net, Kirill Simonov and contributors | MIT | https://github.com/yaml/pyyaml |
 | attrs | 26.1.0 | Hynek Schlawack | MIT | https://github.com/python-attrs/attrs |
 | click | 8.5.1 | Pallets | BSD-3-Clause | https://github.com/pallets/click |
 | contourpy | 1.4.0 | ContourPy Developers | BSD-3-Clause | https://github.com/contourpy/contourpy |
@@ -37,7 +37,7 @@ WFDB signal files only; it bundles libsndfile, LGPL), docopt (bioread's command-
 | kiwisolver | 1.5.1 | Nucleic Development Team | BSD-3-Clause | https://github.com/nucleic/kiwi |
 | natsort | 8.4.0 | Seth M. Morton | MIT | https://github.com/SethMMorton/natsort |
 | packaging | 26.3 | Donald Stufft and contributors | Apache-2.0 OR BSD-2-Clause | https://github.com/pypa/packaging |
-| Pillow | 13.0.0 | Jeffrey A. Clark and contributors | MIT-CMU | https://github.com/python-pillow/Pillow |
+| Pillow | 13.0.0 | Jeffrey 'Alex' Clark and contributors; PIL: Secret Labs AB, Fredrik Lundh and contributors | MIT-CMU | https://github.com/python-pillow/Pillow |
 | platformdirs | 4.14.5 | platformdirs contributors | MIT | https://github.com/tox-dev/platformdirs |
 | pyparsing | 3.3.3 | Paul McGuire | MIT | https://github.com/pyparsing/pyparsing |
 | python-dateutil | 4.0.0 | dateutil contributors | Apache-2.0 AND BSD-3-Clause | https://github.com/dateutil/dateutil |
@@ -46,14 +46,14 @@ WFDB signal files only; it bundles libsndfile, LGPL), docopt (bioread's command-
 | ruamel.yaml | 0.19.1 | Anthon van der Neut | MIT | https://sourceforge.net/projects/ruamel-yaml/ |
 | tqdm | 4.70.1 | tqdm developers | MPL-2.0 AND MIT | https://github.com/tqdm/tqdm |
 | typing_extensions | 4.16.0 | Python Software Foundation | PSF-2.0 | https://github.com/python/typing_extensions |
-| tzdata | 2026.6 | Python Software Foundation (IANA time zone data, public domain) | Apache-2.0 | https://github.com/python/tzdata |
+| tzdata | 2026.6 | Paul Ganssle, Stan Ulbrych (IANA time zone data, public domain) | Apache-2.0 | https://github.com/python/tzdata |
 
 Test-only (not in the image): pytest (MIT); pyabf 2.3.8 (Scott W Harden, MIT) writes the ABF1 file of the
 synthetic fixture. The fixture's EDF+, WFDB and LabChart-style MATLAB files are written by this repository's own
 code, byte by byte, so the readers are checked against an independent writer.
 
-Formats not read, and why: Spike2 `.smrx` needs CED's sonpy (closed source, no licence); LabChart `.adicht` on
-Linux needs adichtion (GPL-3.0). Both are reported per file with export instructions.
+Formats not read, and why: Spike2 `.smrx` needs CED's sonpy (binary-only, no source; GPL-3.0-or-later per its PyPI metadata; Linux wheel only for CPython 3.14); LabChart `.adicht` on
+Linux needs adichtion (GPL-3.0-or-later). Both are reported per file with export instructions.
 
 This app's own code (reader glue, channel typing, the HDF5 trial layout and overlap merging, the LabChart MATLAB
 and text export parsers, the BIDS physio reader, the checks and figures) is Apache-2.0.

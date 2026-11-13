@@ -96,6 +96,7 @@ references:
     given-names: "Andrew P."
   journal: "Frontiers in Neuroinformatics"
   volume: "8"
+  start: "10"
   year: 2014
   doi: "10.3389/fninf.2014.00010"
   identifiers:
@@ -147,6 +148,8 @@ references:
   journal: "Circulation"
   volume: "101"
   issue: "23"
+  start: "e215"
+  end: "e220"
   year: 2000
   doi: "10.1161/01.CIR.101.23.e215"
   identifiers:
