@@ -1,0 +1,14 @@
+# local data: fixtures, outputs, demo inputs (anchored, so validation/ data stays tracked)
+/data/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+*.egg-info/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

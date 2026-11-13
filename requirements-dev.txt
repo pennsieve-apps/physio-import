@@ -1,0 +1,4 @@
+-r requirements.txt
+# tests: pytest; pyabf writes an ABF1 file for the Neo reader test (MIT)
+pytest==9.2.0
+pyabf==2.3.8
