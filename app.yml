@@ -1,0 +1,146 @@
+# yaml-language-server: $schema=https://schemas.pennsieve.io/app-manifest/v1.json
+schemaVersion: "1.0"
+application:
+  name: Physiology Recording Import
+  description: >-
+    Reads cardiovascular and autonomic physiology recordings from common acquisition systems and
+    writes one NWB file per recording plus plain index tables, so the physiology workflow steps (and
+    any NWB tool) can read them. Formats: EDF/EDF+/BDF (pyEDFlib), WFDB records and annotations (WFDB
+    for Python), Axon ABF and Spike2 .smr (Neo), BIOPAC .acq (bioread), NWB, HDF5 (one group per trial
+    with column datasets, or a layout.yaml), MATLAB .mat (LabChart and Spike2 exports, simple vectors,
+    or a layout.yaml), CSV/TSV/TXT/XLSX with a time column (and LabChart text exports), WAV, and BIDS
+    physiological recordings (_physio.tsv.gz / _stim.tsv.gz with inherited JSON sidecars, StartTime
+    alignment, the run's task events; cardiac, respiratory and trigger columns typed). Spike2
+    .smrx and LabChart .adicht are not read (no reader with a usable licence) and the log says how to
+    export them. Channels are typed (ECG, blood pressure, respiration, PPG, nerve, EMG, stimulation,
+    heart rate, temperature, other pressures) by a channels-map.csv, by name or by content, and put in
+    volts, mmHg or bpm when the source gives a unit (otherwise marked uncalibrated); markers and
+    annotations become events; per-trial stimulation parameters stored in the source are kept. Each
+    NWB file is checked with NWB Inspector; an overview figure and flat/saturated/noisy checks per
+    channel show what was imported. Human and animal recordings.
+  type: processor
+  tags:
+    - physiology
+    - autonomic
+    - cardiovascular
+    - ecg
+    - blood-pressure
+    - respiration
+    - nerve-stimulation
+    - electrophysiology
+    - nwb
+    - data-import
+    - quality-control
+runtime:
+  # One recording at a time, each channel read a slice at a time (tables and .mat files are loaded whole).
+  # Measured in Docker (amd64 emulation on an M-series Mac, --cpus 1 --memory 3g, read-only, any uid) on the five
+  # demo sources: peak 754 MB (cgroup memory.peak, page cache included) on the 496 MB pig HDF5, at most 10 s
+  # per demo source (README "Runtime"). Single-threaded.
+  cpu: 1024
+  memory: 2048
+  computeTypes:
+    - standard
+  timeoutSeconds: 900
+parameters:
+  - name: SPECIES
+    type: string
+    label: Species
+    description: >-
+      Species of recordings whose species is not known from a recordings-map.csv, SDS subjects.xlsx or the
+      NWB file. auto leaves it empty (later steps then assume human). Written to recordings.csv; the analysis
+      steps choose their species presets from it.
+    defaultValue: auto
+    validValues: [auto, human, pig, dog, rabbit, rat, mouse, other]
+  - name: TIME_COLUMN
+    type: string
+    label: Time column
+    description: >-
+      Name of the time column of CSV/TSV/XLSX recordings, in seconds (a unit in the name, e.g. "Time (ms)",
+      is honoured). Empty: a column named Time, time, t, Time (s), seconds or timestamp.
+    defaultValue: ""
+  - name: SAMPLING_RATE
+    type: number
+    label: Sampling rate (Hz)
+    description: >-
+      Samples per second of tables without a time column (and of .mat files with signal vectors but no
+      rate). 0 = from the file; such files are skipped when it is 0.
+    defaultValue: 0
+    min: 0
+  - name: EXCLUDE_FOLDERS
+    type: string
+    label: Folders to leave out
+    description: >-
+      Comma-separated folder names never searched for recordings (derived data, code and documents in SDS
+      and BIDS datasets).
+    defaultValue: "derivative,derivatives,code,docs"
+  - name: FIGURES
+    type: boolean
+    label: Overview figures
+    description: One overview PNG per recording (every channel, the whole recording and a 10 s zoom).
+    defaultValue: true
+  - name: INSPECTOR
+    type: boolean
+    label: NWB Inspector
+    description: >-
+      Check every NWB file with NWB Inspector (with PyNWB schema validation). CRITICAL issues fail the
+      recording, except missing subject metadata (age, sex), which is reported.
+    defaultValue: true
+  - name: THREADS
+    type: integer
+    label: Threads
+    description: BLAS threads; 0 = from the container's CPU quota, capped by its memory.
+    defaultValue: 0
+    min: 0
+inputs:
+  - name: recordings
+    description: >-
+      Physiology recordings in any of the formats above, in any folder layout (sub-*/ses-*/perf-* folder
+      names give subject and session; a BIDS dataset's sub/ses/task/run entities and participants.tsv are
+      used, also when it holds physiological recordings only). Optional, anywhere below: channels-map.csv (pattern, type, unit,
+      scale, site, name, path_glob) to type and calibrate channels; recordings-map.csv (path_glob, subject,
+      session, label, species); layout.yaml for HDF5/.mat files without a standard layout; SDS
+      subjects.xlsx / performances.xlsx (species, sex, age, start time). Identical files are read once.
+    mediaTypes:
+      - application/edf
+      - application/x-hdf5
+      - application/x-hdf5; profile=nwb
+      - text/csv
+      - text/tab-separated-values
+      - application/json
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      - application/octet-stream
+    placement: subfolder
+    required: true
+outputs:
+  - name: physio
+    description: >-
+      The imported dataset: recordings.csv (one row per recording: ids, species, start, duration, channel
+      types, source), channels.csv (one row per channel: NWB name, type and how it was decided, unit, rate,
+      calibrated, scale, status), events.tsv (markers and annotations, BIDS style), provenance.json, and
+      sub-<subject>/[ses-<session>/]<recording_id>.nwb (each channel a TimeSeries; markers and per-trial
+      parameters as interval tables).
+    mediaTypes:
+      - application/x-hdf5; profile=nwb
+      - text/csv
+      - text/tab-separated-values
+      - application/json
+  - name: qc
+    description: >-
+      physio-import/: qc.csv (per-channel checks: missing samples, range, flat, saturated, noisy, storage),
+      nwbinspector.csv, figures/<recording_id>_overview.png, summary.json (captioned figures and warnings)
+      and provenance.json.
+    mediaTypes:
+      - text/csv
+      - application/json
+      - image/png
+
+# How a release is tested before it is made public: the inputs a review run uses.
+# See app-deploy-service docs/app-manifest-review.md. The generator writes recordings/ (the port) and
+# truth.json next to it; only recordings/ becomes the port's contents.
+review:
+  version: 1
+  inputs:
+    recordings:
+      generate:
+        command: python -m tests.make_fixture "$REVIEW_INPUT_DIR"
+        root: recordings

@@ -98,7 +98,8 @@ CITATIONS = ["10.7554/eLife.78362", "10.3389/fninf.2014.00010", "10.13026/9njx-6
 DEFAULTS = {"SPECIES": "auto", "TIME_COLUMN": "", "SAMPLING_RATE": "0", "EXCLUDE_FOLDERS": "derivative,derivatives,code,docs",
             "FIGURES": "true", "INSPECTOR": "true", "THREADS": "0"}
 REC_COLS = ["recording_id", "subject", "session", "label", "path", "species", "start_time", "duration_s", "recorded_s",
-            "n_segments", "channel_types", "source_format", "source_path", "metadata_source", "age", "sex"]
+            "n_segments", "channel_types", "source_format", "source_path", "metadata_source", "age", "sex",
+            "task", "run"]  # task, run: BIDS entities of the run (empty for other sources)
 CH_COLS = ["recording_id", "channel", "type", "original_name", "unit", "sampling_rate_hz", "n_samples", "calibrated",
            "scale", "site", "typing", "status", "status_description"]
 EV_COLS = ["recording_id", "onset", "duration", "trial_type", "event_id", "amplitude", "amplitude_unit",
@@ -194,6 +195,7 @@ def ids_for(rec, rel: str, rmap, sds: M.SdsInfo, params: dict, n_from_file: int)
     parts = Path(rel).parts
     fo = M.folder_ids(list(parts[:-1]), Path(rel).stem)
     entry = M.map_lookup(rmap, rel)
+    meta_kind = "sds" if any(x.endswith(".xlsx") for x in sds.sources) else "bids"
     sources = []
     subject = session = label = species = ""
     if entry:
@@ -201,7 +203,7 @@ def ids_for(rec, rel: str, rmap, sds: M.SdsInfo, params: dict, n_from_file: int)
         sources.append("mapping")
     if not subject and fo.get("sub"):
         subject = fo["sub"]
-        sources.append("sds" if sds.sources else "bids")
+        sources.append(meta_kind)
     if not subject and rec.subject_id:
         subject = rec.subject_id
         sources.append("file")
@@ -225,11 +227,11 @@ def ids_for(rec, rel: str, rmap, sds: M.SdsInfo, params: dict, n_from_file: int)
         base = stem + (f"-{rec.key}" if rec.key and n_from_file > 1 else "")
         label = rec.label_hint or M.label_from_stem(base, subject, session, perf, rec.source_format)
     subj_key = M.clean_label(subject)
-    sinfo = sds.subjects.get(subj_key, {})
+    sinfo = M.subject_info(sds, rec.path, subj_key)
     if not species and sinfo.get("species"):
         species = sinfo["species"]
-        if "sds" not in sources:
-            sources.append("sds")
+        if meta_kind not in sources:
+            sources.append(meta_kind)
     if not species and rec.species:
         species = rec.species
         if "file" not in sources:
@@ -280,6 +282,8 @@ def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir:
         row = C.map_match(cmap, sig.name, leaf, rel)
         if row and row.type:
             t, typing = row.type, "mapping"
+        elif sig.type_hint:  # the format says (BIDS column names)
+            t, typing = sig.type_hint, "name"
         else:
             t = C.type_by_name(sig.name, leaf)
             typing = "name" if t else ""
@@ -337,12 +341,16 @@ def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir:
                 plan = N.Plan(name, "", cal.unit, conv * q, off, idt,
                               lambda r, _q=q, _d=idt: np.round(np.asarray(r, float) / _q).astype(_d), sig)
                 storage = f"{idt.name} steps of {q:g} (lossless: every source value is a multiple of it)"
-            else:
+            elif max(abs(rmin), abs(rmax)) < 3e38 if math.isfinite(rmin) else True:
                 plan = N.Plan(name, "", cal.unit, conv, off, np.dtype(np.float32),
                               lambda r: np.asarray(r, np.float32), sig)
                 storage = "float32"
+            else:  # values beyond float32's range
+                plan = N.Plan(name, "", cal.unit, conv, off, np.dtype(np.float64),
+                              lambda r: np.asarray(r, np.float64), sig)
+                storage = "float64"
         status, sdesc, vals = st.status(t)
-        notes = [n for n in (cal.note, sdesc) if n]
+        notes = [n for n in ((sig.type_note if typing == "name" else ""), cal.note, sdesc) if n]
         plan.description = (f"{sig.name}: type {t} (by {typing}); "
                             f"{'calibrated' if cal.calibrated else 'not calibrated'}; stored as {storage}"
                             + (f"; {sig.description}" if sig.description else ""))
@@ -358,6 +366,11 @@ def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir:
                   "lag1_autocorrelation"):
             qc_rows.append([rid, name, k, fmt(vals[k]), f"{cal.unit}" if k in ("min", "max", "mean", "sd") else ""])
         qc_rows.append([rid, name, "status", status, sdesc])
+        if status == "saturated":
+            from processor.model import Marker
+            for a, b, v in st.clipped_intervals():
+                rec.markers.append(Marker(a, b - a, f"{name} clipped at {v:g} {cal.unit}", "artifact",
+                                          {"channel_name": name, "source": "qc"}))
         qc_rows.append([rid, name, "storage", storage, ""])
     # NWB
     sub = f"sub-{meta['subject']}" + (f"/ses-{meta['session']}" if meta["session"] else "")
@@ -413,7 +426,8 @@ def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir:
                         "recorded_s": fmt(recorded, 9), "n_segments": max(len(s.segments) for s in rec.signals),
                         "channel_types": "|".join(types), "source_format": rec.source_format, "source_path": rel
                         + (f"#{rec.key}" if rec.key else ""), "metadata_source": meta["metadata_source"],
-                        "age": meta["age"], "sex": meta["sex"]},
+                        "age": meta["age"], "sex": meta["sex"], "task": rec.entities.get("task", ""),
+                        "run": rec.entities.get("run", "")},
             "ch_rows": ch_rows, "figures": figs, "issues": issues,
             "headline": {"n_channels": len(ch_rows), "duration_s": round(max(durations), 3),
                          "recorded_s": round(recorded, 3), "n_markers": len(rec.markers),
@@ -435,8 +449,10 @@ def events_rows(rid: str, markers) -> list[dict]:
     for i, m in enumerate(sorted(markers, key=lambda m: m.onset), 1):
         row = {c: "n/a" for c in EV_COLS}
         row.update(recording_id=rid, onset=fmt(m.onset, 10), duration=fmt(m.duration, 10) if m.duration else "n/a",
-                   trial_type=m.trial_type, event_id=f"{'ann' if m.trial_type == 'annotation' else 'mrk'}-{i:06d}",
-                   label=m.label.replace("\t", " ").replace("\n", " ") or "n/a", source="marker")
+                   trial_type=m.trial_type,
+                   event_id=f"{ {'annotation': 'ann', 'artifact': 'art'}.get(m.trial_type, 'mrk') }-{i:06d}",
+                   label=m.label.replace("\t", " ").replace("\n", " ") or "n/a",
+                   source=(m.extra or {}).get("source", "marker"))
         extra = m.extra or {}
         row["annotator"] = str(extra.get("annotator", "n/a"))
         row["marker_channel"] = str(extra.get("channel_name", extra.get("channel", extra.get("column", "n/a"))))
@@ -481,6 +497,7 @@ def main() -> int:
         log.error("configuration file: %s", e)
         return 2
     sds = M.read_sds(sorted(found.config.get("sds", [])), log)
+    M.read_participants(sorted(found.config.get("participants", [])), sds, log)
     for k, v in found.config.items():
         log.info("config %s: %s", k, ", ".join(rel(p) for p in v))
     for a, b in found.duplicates:
@@ -492,7 +509,8 @@ def main() -> int:
         _write_tables(out_physio, out_qc, [], [], [], [], [])
         return 1
     log.info("%d source file(s) to read", len(found.sources))
-    ctx = Ctx(time_column=params["time_column"], sampling_rate=params["sampling_rate"], layouts=layouts, log=log)
+    ctx = Ctx(time_column=params["time_column"], sampling_rate=params["sampling_rate"], layouts=layouts, log=log,
+              input_root=input_dir)
 
     rec_rows, ch_rows, ev_rows, qc_rows, insp_rows = [], [], [], [], []
     per_rec: dict[str, dict] = {}

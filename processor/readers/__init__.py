@@ -10,6 +10,9 @@ from processor.model import Skip
 def read(path: Path, fmt: str, ctx) -> list:
     if fmt in DEFERRED:
         raise Skip(DEFERRED[fmt])
+    if fmt == "bids-physio":
+        from processor.readers import bids_physio
+        return bids_physio.read(path, fmt, ctx)
     if fmt in ("edf", "bdf"):
         from processor.readers import edf
         return edf.read(path, fmt, ctx)

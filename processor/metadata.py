@@ -101,7 +101,9 @@ def map_lookup(entries: list[MapEntry], rel: str) -> MapEntry | None:
 
 @dataclass
 class SdsInfo:
-    subjects: dict = field(default_factory=dict)       # subject -> {species, sex, age}
+    # dataset folder (where subjects.xlsx / participants.tsv is) -> subject -> {species, sex, age}: a table only
+    # applies to recordings below its own folder (two datasets may both have a sub-01)
+    subjects: dict = field(default_factory=dict)
     performances: dict = field(default_factory=dict)   # perf id (without perf-) -> start datetime
     sources: list = field(default_factory=list)
 
@@ -137,7 +139,7 @@ def read_sds(files: list[Path], log) -> SdsInfo:
                 if not sid or sid == "nan":
                     continue
                 g = lambda k: ("" if (v := r.get(k)) is None or str(v) == "nan" else str(v))  # noqa: E731
-                info.subjects[clean_label(sid)] = {"species": species_code(g("species")), "sex": sex_code(g("sex")),
+                info.subjects.setdefault(str(f.parent), {})[clean_label(sid)] = {"species": species_code(g("species")), "sex": sex_code(g("sex")),
                                                    "age": age_iso(g("age"))}
             info.sources.append(str(f.name))
         elif name.startswith("performances") and "performance id" in df.columns:
@@ -196,3 +198,37 @@ def recording_id(subject: str, session: str, label: str) -> str:
     if session:
         rid += f"_ses-{clean_label(session)}"
     return rid + f"_rec-{clean_label(label)}"
+
+
+def read_participants(files: list[Path], info: SdsInfo, log) -> None:
+    """BIDS participants.tsv: participant_id with species, sex (or gender) and age (years) when present."""
+    import pandas as pd
+
+    for f in files:
+        try:
+            df = pd.read_csv(f, sep="\t", dtype=str, na_values=["n/a"])
+        except Exception as e:  # noqa: BLE001
+            log.warning("%s: not read (%s)", f.name, e)
+            continue
+        df.columns = [str(c).strip().lower() for c in df.columns]
+        if "participant_id" not in df.columns:
+            continue
+        for _, r in df.iterrows():
+            sid = clean_label(strip_prefix(r["participant_id"] or "", "sub-"))
+            if not sid:
+                continue
+            g = lambda k: "" if k not in r or pd.isna(r[k]) else str(r[k])  # noqa: E731
+            cur = info.subjects.setdefault(str(f.parent), {}).setdefault(sid, {"species": "", "sex": "", "age": ""})
+            cur["species"] = cur["species"] or species_code(g("species"))
+            cur["sex"] = cur["sex"] or sex_code(g("sex") or g("gender"))
+            cur["age"] = cur["age"] or age_iso(g("age"))
+        info.sources.append(f.name)
+
+
+def subject_info(info: SdsInfo, source: Path, subject: str) -> dict:
+    """The subject's row from the deepest subjects.xlsx / participants.tsv whose folder contains the source."""
+    src = str(source)
+    for root in sorted(info.subjects, key=len, reverse=True):
+        if src.startswith(root.rstrip("/") + "/") and subject in info.subjects[root]:
+            return info.subjects[root][subject]
+    return {}

@@ -5,7 +5,7 @@
 #   validation/run-demos.sh [demo ...]      demos: d349 d655 d406 fantasia aging (default: all)
 set -eu
 HERE=$(cd "$(dirname "$0")/.." && pwd)
-DATA=${DATA:-$HERE/../workflow-physiology/data}
+DATA=$(cd "${DATA:-$HERE/../workflow-physiology/data}" && pwd -P)
 WORK=${WORK:-$DATA/work}
 PYTHON=${PYTHON:-python3}
 IMAGE=${IMAGE:-physio-import:dev}
@@ -26,7 +26,7 @@ for demo in $DEMOS; do
   ln -sfn "$DATA/$src" "$in/$src"
   [ -f "$HERE/validation/$demo-channels-map.csv" ] && cp "$HERE/validation/$demo-channels-map.csv" "$in/channels-map.csv"
   rm -rf "$out/physio" "$out/qc"
-  mkdir -p "$out"
+  mkdir -p "$out" && chmod 777 "$out"
   echo "=== $demo: $DATA/$src -> $out"
   if [ "${DOCKER:-0}" = 1 ]; then
     docker run --rm --platform linux/amd64 --cpus 1 --memory "${MEMORY:-3g}" --read-only --user 65534:65534 \

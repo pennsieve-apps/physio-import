@@ -34,6 +34,8 @@ class Signal:
     # explicit sample times, (segment, start, stop) -> s from the recording start (irregular sampling, or a
     # source clock that differs from the nominal rate)
     segment_times: Callable[[int, int, int], np.ndarray] | None = None
+    type_hint: str = ""                         # a type the reader knows from the format (BIDS column names)
+    type_note: str = ""
 
     @property
     def n_samples(self) -> int:
@@ -63,7 +65,8 @@ class SourceRecording:
     species: str = ""
     sex: str = ""
     age: str = ""
-    label_hint: str = ""         # a better recording label than the file stem, when the reader knows one
+    label_hint: str = ""
+    entities: dict = field(default_factory=dict)  # BIDS entities of the run (task, acq, run, ...)         # a better recording label than the file stem, when the reader knows one
     notes: list[str] = field(default_factory=list)
     close: Callable[[], None] = lambda: None
 

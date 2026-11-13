@@ -4,7 +4,8 @@ Per-channel checks and the overview figure, computed in one streaming pass over 
 - flat: no change at all, or (except stimulation and device heart-rate channels, which are
   constant between pulses or beats) at least FLAT_FRACTION of the 1 s windows without any change;
 - saturated: at least SAT_FRACTION of the samples sit at the channel's minimum or maximum in runs
-  of 3 or more (a clipped amplifier or transducer); not for stimulation channels;
+  of 30 ms or more (at least 3 samples): a clipped amplifier or transducer; not for stimulation
+  channels;
 - noisy: for slow physiological waveforms (ECG, BP, respiration, PPG, temperature, pressures)
   a lag-1 autocorrelation below NOISY_AUTOCORR: neighbouring samples are less alike than a
   waveform sampled at this rate should be, i.e. the channel is mostly noise or mains hum.
@@ -18,6 +19,7 @@ import numpy as np
 
 FLAT_FRACTION = 0.5
 SAT_FRACTION = 0.01
+SAT_RUN_S = 0.03          # a clipped stretch lasts at least 30 ms (a slow wave quantised at its peak does not)
 NOISY_AUTOCORR = 0.5
 N_BINS = 1500
 ZOOM_S = 10.0
@@ -54,6 +56,7 @@ class ChannelStats:
     env_max: np.ndarray = field(default=None)
     zoom_t: list = field(default_factory=list)
     zoom_v: list = field(default_factory=list)
+    clip_runs: list = field(default_factory=list)   # (start s, end s, value) of long runs at a running extreme
 
     def __post_init__(self):
         self.env_min = np.full(N_BINS, np.nan)
@@ -64,6 +67,7 @@ class ChannelStats:
         n = x.size
         if n == 0:
             return
+        t = times if times is not None else t0 + np.arange(n) / self.rate
         fin = np.isfinite(x)
         self.n += n
         self.n_nan += int(n - fin.sum())
@@ -72,13 +76,18 @@ class ChannelStats:
             self.s1 += float(xf.sum())
             self.s2 += float(np.dot(xf, xf))
             lo, hi = float(xf.min()), float(xf.max())
-            run = _runs3(x)
+            run = _long_runs(x, max(3, int(round(SAT_RUN_S * self.rate))))
             if lo < self.vmin:
                 self.vmin, self.n_at_min = lo, 0
             if hi > self.vmax:
                 self.vmax, self.n_at_max = hi, 0
             self.n_at_min += int(np.count_nonzero(run & (x == self.vmin)))
             self.n_at_max += int(np.count_nonzero(run & (x == self.vmax)))
+            ext = run & ((x == self.vmin) | (x == self.vmax))
+            if ext.any() and len(self.clip_runs) < 100_000:
+                e = np.flatnonzero(np.diff(np.r_[0, ext.astype(np.int8), 0]))
+                for a, b in zip(e[::2], e[1::2]):
+                    self.clip_runs.append((float(t[a]), float(t[b - 1]) + 1.0 / self.rate, float(x[a])))
         if n > 1:
             a, b = x[:-1], x[1:]
             m = np.isfinite(a) & np.isfinite(b)
@@ -100,7 +109,6 @@ class ChannelStats:
                 self.win_total += int(ok.sum())
                 self.win_flat += int(np.count_nonzero(ptp[ok] == 0))
         # envelope
-        t = times if times is not None else t0 + np.arange(n) / self.rate
         if self.span > 0:
             bi = np.clip((t / self.span * N_BINS).astype(np.int64), 0, N_BINS - 1)
             starts = np.flatnonzero(np.r_[True, bi[1:] != bi[:-1]])
@@ -136,6 +144,9 @@ class ChannelStats:
                 self.quant_ok = False
                 return
             q = float(d.min())
+            if not (q > 0) or np.max(np.abs(u)) / q > 2**31:
+                self.quant_ok = False
+                return
             # refine by least squares on the integer multiples (the smallest difference carries rounding noise)
             for _ in range(2):
                 k = np.round(u / q)
@@ -160,6 +171,12 @@ class ChannelStats:
         return None
 
     def autocorr(self) -> float:
+        try:
+            return self._autocorr()
+        except (OverflowError, ZeroDivisionError, ValueError):
+            return float("nan")
+
+    def _autocorr(self) -> float:
         n = self.n_pairs
         if n < 3:
             return float("nan")
@@ -174,8 +191,22 @@ class ChannelStats:
         m = self.n - self.n_nan
         if m == 0:
             return float("nan"), float("nan")
-        mean = self.s1 / m
-        return mean, math.sqrt(max(0.0, self.s2 / m - mean * mean))
+        try:
+            mean = self.s1 / m
+            return mean, math.sqrt(max(0.0, self.s2 / m - mean * mean))
+        except (OverflowError, ValueError):
+            return float("nan"), float("nan")
+
+    def clipped_intervals(self, merge_s: float = 1.0) -> list[tuple[float, float, float]]:
+        """Stretches stuck at the final minimum or maximum, joined when less than merge_s apart."""
+        runs = sorted(r for r in self.clip_runs if r[2] in (self.vmin, self.vmax))
+        out: list[list[float]] = []
+        for a, b, v in runs:
+            if out and a - out[-1][1] < merge_s:
+                out[-1][1] = max(out[-1][1], b)
+            else:
+                out.append([a, b, v])
+        return [tuple(o) for o in out]
 
     def status(self, ch_type: str) -> tuple[str, str, dict]:
         m = self.n - self.n_nan
@@ -195,7 +226,7 @@ class ChannelStats:
             return "flat", f"{100 * flat_frac:.0f}% of 1 s windows without any change", vals
         if ch_type not in NO_SATURATION and sat >= SAT_FRACTION:
             return ("saturated", f"{100 * sat:.1f}% of samples stuck at the minimum ({self.vmin:g}) or maximum "
-                    f"({self.vmax:g}) in runs of 3 or more: clipped amplifier or transducer?", vals)
+                    f"({self.vmax:g}) in runs of {max(3, int(round(SAT_RUN_S * self.rate)))} samples or more: clipped amplifier or transducer?", vals)
         if ch_type in NOISY_TYPES and math.isfinite(ac) and ac < NOISY_AUTOCORR:
             return ("noisy", f"lag-1 autocorrelation {ac:.2f} (< {NOISY_AUTOCORR:g}): neighbouring samples barely "
                     "related, mostly noise or mains interference", vals)
@@ -205,16 +236,18 @@ class ChannelStats:
         return "good", "; ".join(notes), vals
 
 
-def _runs3(x: np.ndarray) -> np.ndarray:
-    """True where a sample equals both neighbours (inside a run of 3 or more equal values)."""
-    r = np.zeros(x.size, dtype=bool)
-    if x.size >= 3:
-        eq = x[1:] == x[:-1]
-        mid = eq[1:] & eq[:-1]
-        r[1:-1] = mid
-        r[:-2] |= mid
-        r[2:] |= mid
-    return r
+def _long_runs(x: np.ndarray, k: int) -> np.ndarray:
+    """True where a sample is inside a run of at least k equal consecutive values."""
+    n = x.size
+    out = np.zeros(n, dtype=bool)
+    if n < k or n == 0:
+        return out
+    change = np.flatnonzero(x[1:] != x[:-1]) + 1
+    starts = np.r_[0, change]
+    lens = np.diff(np.r_[starts, n])
+    for s, ln in zip(starts[lens >= k], lens[lens >= k]):
+        out[s:s + ln] = True
+    return out
 
 
 def decimate_minmax(t: np.ndarray, v: np.ndarray, n_out: int = 4000) -> tuple[np.ndarray, np.ndarray]:

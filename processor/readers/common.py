@@ -23,6 +23,7 @@ class Ctx:
     sampling_rate: float = 0.0
     layouts: list = field(default_factory=list)   # (path, dict) of layout.yaml files
     log: object = None
+    input_root: object = None                     # INPUT_DIR (the top for BIDS sidecar inheritance)
 
 
 def split_name_unit(col: str) -> tuple[str, str]:

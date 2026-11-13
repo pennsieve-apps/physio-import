@@ -157,12 +157,15 @@ def write(path: Path, rid: str, start: datetime | None, description: str, subjec
         nwb.add_acquisition(ts)
     if markers:
         ti = TimeIntervals(name="markers", description="Markers and annotations found in the source file, as found "
-                                                       "(label = the original text or annotation code).")
+                                                       "(label = the original text or annotation code), and clipped "
+                                                       "stretches found by physio-import's checks.")
         ti.add_column("label", "marker text or annotation code as in the source")
-        ti.add_column("source", "where the marker came from (marker = the file's own markers/annotations)")
+        ti.add_column("source", "where the row came from: marker = the file's own markers and annotations; qc = a "
+                                "stretch physio-import found clipped (trial_type artifact)")
+        ti.add_column("trial_type", "marker, annotation or artifact (as in events.tsv)")
         for m in sorted(markers, key=lambda m: m.onset):
             ti.add_row(start_time=float(m.onset), stop_time=float(m.onset + (m.duration or 0.0)), label=m.label,
-                       source="marker")
+                       source=(m.extra or {}).get("source", "marker"), trial_type=m.trial_type)
         nwb.add_time_intervals(ti)
     if stim_table:
         ti = TimeIntervals(name="stimulation_source", description=(

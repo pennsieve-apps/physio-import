@@ -182,8 +182,8 @@ def calibrate(ch_type: str, source_unit: str, user_unit: str = "", user_scale: f
             return Calibration("mmHg", scale0 * MMHG[key], True, note)
     if not key or key in ("a.u.", "au", "arb", "none", "-", "n/a"):
         return Calibration("a.u.", scale0, False, note or "no physical unit in the source")
-    if key in VOLT and ch_type in ("stim", "other", "resp", "ppg", "pressure"):
-        return Calibration(unit, scale0, True, note)
+    if key in VOLT:  # a voltage on a channel of another type: volts, spelled V
+        return Calibration("V", scale0 * VOLT[key], True, note)
     return Calibration(unit, scale0, True, note)
 
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -29,6 +30,9 @@ DEFERRED = {
               "file (File > Export > MATLAB) or as text (File > Export > Text File, with time and channel titles) "
               "and run again.",
 }
+BIDS_PHYSIO = re.compile(r"^(?P<base>.+?)(?:_recording-[A-Za-z0-9]+)?_(?:physio|stim)\.tsv(?:\.gz)?$")
+BIDS_SKIP = re.compile(r"(_physioevents\.tsv(\.gz)?|_(events|channels|electrodes|scans|sessions|beh|coordsystem)\.tsv"
+                       r"|^participants\.tsv|^samples\.tsv)$")
 SDS_METADATA = {"dataset_description", "subjects", "samples", "performances", "manifest", "submission",
                 "code_description", "sites", "resources", "curation", "code_parameters"}
 CONFIG_NAMES = {"channels-map.csv": "channels_map", "recordings-map.csv": "recordings_map",
@@ -83,10 +87,21 @@ def find(input_dir: Path, exclude_folders: set[str]) -> Found:
             files.append(rootp / n)
 
     by_size: dict[int, list[Path]] = {}
+    bids_groups: dict = {}
     for p in files:
         low = p.name.lower()
         if low in CONFIG_NAMES:
             found.config.setdefault(CONFIG_NAMES[low], []).append(p)
+            continue
+        if BIDS_PHYSIO.match(p.name):
+            key = (str(p.parent), BIDS_PHYSIO.match(p.name).group("base"))
+            if key not in bids_groups:          # one recording per run: the reader finds the other files
+                bids_groups[key] = p
+                found.sources.append((p, "bids-physio"))
+            continue
+        if BIDS_SKIP.search(p.name):            # BIDS sidecar tables, read with the recordings they belong to
+            if p.name == "participants.tsv":
+                found.config.setdefault("participants", []).append(p)
             continue
         ext = p.suffix.lower()
         stem = p.stem.lower()
