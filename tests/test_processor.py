@@ -155,7 +155,7 @@ def test_csv_gaps_markers_and_duplicates(run):
     art = [e for e in run["events"] if e["recording_id"] == "sub-h02_rec-session-rest" and e["trial_type"] == "artifact"]
     assert art and all(e["source"] == "qc" and e["label"].startswith("resp-2 clipped") for e in art)
     assert float(mk[0]["onset"]) == pytest.approx(40.0, abs=0.005)
-    dup = run["prov"]["recordings"]["sub-h02/session-rest - Copy.csv"]
+    dup = run["prov"]["skipped_files"]["sub-h02/session-rest - Copy.csv"]
     assert dup["status"] == "skipped" and "identical" in dup["reason"]
 
 
@@ -170,7 +170,7 @@ def test_labchart_blocks_and_comments(run):
 
 
 def test_deferred_formats_say_how_to_export(run):
-    p = run["prov"]["recordings"]
+    p = run["prov"]["skipped_files"]
     assert p["deferred/trial.smrx"]["status"] == "skipped" and "sonpy" in p["deferred/trial.smrx"]["reason"]
     assert ".smr" in p["deferred/trial.smrx"]["reason"]
     assert p["deferred/bladder.adicht"]["status"] == "skipped" and "GPL" in p["deferred/bladder.adicht"]["reason"]
@@ -199,8 +199,10 @@ def test_tables_provenance_summary(run):
     qc = run["out"] / "qc" / "physio-import"
     summ = json.loads((qc / "summary.json").read_text())
     assert summ["app"] == "physio-import" and len(summ["figures"]) == len(run["recs"])
-    for f in summ["figures"]:
-        assert (qc / f["path"]).is_file() and f["caption"]
+    for f in summ["figures"] + summ["tables"]:
+        assert (qc / f["path"]).is_file() and f["caption"]   # everything inside the qc port
+    assert (qc / "recordings.csv").read_text() == (run["physio"] / "recordings.csv").read_text()
+    assert (qc / "channels.csv").read_text() == (run["physio"] / "channels.csv").read_text()
     insp = list(csv.DictReader(open(qc / "nwbinspector.csv")))
     assert not [i for i in insp if i["importance"] == "CRITICAL" and not i["check"].startswith("check_subject")]
 
@@ -220,7 +222,8 @@ def test_bids_physio(run):
     ev = {e["label"]: float(e["onset"]) for e in run["events"] if e["recording_id"] == rid}
     assert ev["breath-hold"] == pytest.approx(t2["events"]["breath-hold"])
     # BIDS sidecars and events tables are not recordings
-    assert not [k for k in run["prov"]["recordings"] if k.endswith(("_events.tsv", ".json", "participants.tsv"))]
+    assert not [k for k in run["prov"]["skipped_files"] if k.endswith(("_events.tsv", ".json", "participants.tsv"))]
+    assert set(run["prov"]["recordings"]) == set(run["recs"])   # recording ids only
 
 
 def test_exit_codes(tmp_path):

@@ -1,8 +1,8 @@
 === d349: /Users/joostw/code/pennsieve/workflow-physiology/data/discover-349 -> /Users/joostw/code/pennsieve/workflow-physiology/data/work/d349/physio-import
-2026-11-13 21:39:39,945 - INFO - physio-import 0.1.0: INPUT_DIR=/tmp/s/input OUTPUT_DIR=/tmp/s/output threads=1 (THREADS=0: 1 CPU(s) (cgroup CPU quota 1); cgroup memory limit 3072 MB fits 8 at ~300 MB each + 600 MB)
-2026-11-13 21:39:40,318 - INFO - config sds: discover-349/files/subjects.xlsx
-2026-11-13 21:39:40,318 - INFO - not recordings (ignored): .json x1, .md x3
-2026-11-13 21:39:40,318 - INFO - 1 source file(s) to read
-2026-11-13 21:39:40,318 - INFO - [1/1] discover-349/files/primary/sub-2/subject-2.hdf5 (hdf5)
-2026-11-13 21:39:45,775 - INFO - sub-2_rec-hdf5: 6 channel(s) [ecg=ecg/raw_ecg, ecg-2=ecg/processed_ecg, hr=hr, nerve=neural/record1, nerve-2=neural/record2, stim=neural/stim_timing], 432.8 s (361.5 s recorded, 5 segment(s)), 0 marker(s), 20 trial(s) of parameters; written in 2.2s, 4.6s in total
-2026-11-13 21:39:45,788 - INFO - 1 recording(s) written, 0 failed, 0 file(s) skipped in 5.8s, peak memory 748 MB
+2026-11-13 21:53:06,363 - INFO - physio-import 0.1.0: INPUT_DIR=/tmp/s/input OUTPUT_DIR=/tmp/s/output threads=1 (THREADS=0: 1 CPU(s) (cgroup CPU quota 1); cgroup memory limit 3072 MB fits 8 at ~300 MB each + 600 MB)
+2026-11-13 21:53:06,788 - INFO - config sds: discover-349/files/subjects.xlsx
+2026-11-13 21:53:06,788 - INFO - not recordings (ignored): .json x1, .md x3
+2026-11-13 21:53:06,788 - INFO - 1 source file(s) to read
+2026-11-13 21:53:06,788 - INFO - [1/1] discover-349/files/primary/sub-2/subject-2.hdf5 (hdf5)
+2026-11-13 21:53:12,721 - INFO - sub-2_rec-hdf5: 6 channel(s) [ecg=ecg/raw_ecg, ecg-2=ecg/processed_ecg, hr=hr, nerve=neural/record1, nerve-2=neural/record2, stim=neural/stim_timing], 432.8 s (361.5 s recorded, 5 segment(s)), 0 marker(s), 20 trial(s) of parameters; written in 2.2s, 5.1s in total
+2026-11-13 21:53:12,738 - INFO - 1 recording(s) written, 0 failed, 0 file(s) skipped in 6.4s, peak memory 753 MB

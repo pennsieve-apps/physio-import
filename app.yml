@@ -34,7 +34,7 @@ application:
 runtime:
   # One recording at a time, each channel read a slice at a time (tables and .mat files are loaded whole).
   # Measured in Docker (amd64 emulation on an M-series Mac, --cpus 1 --memory 3g, read-only, any uid) on the five
-  # demo sources: peak 748 MB (cgroup memory.peak, page cache included) on the 496 MB pig HDF5, at most 11 s
+  # demo sources: peak 753 MB (cgroup memory.peak, page cache included) on the 496 MB pig HDF5, at most 11 s
   # per demo source (README "Runtime"). Single-threaded.
   cpu: 1024
   memory: 2048
@@ -126,7 +126,8 @@ outputs:
       - application/json
   - name: qc
     description: >-
-      physio-import/: qc.csv (per-channel checks: missing samples, range, flat, saturated, noisy, storage),
+      physio-import/: copies of recordings.csv and channels.csv, qc.csv (per-channel checks: missing samples,
+      range, flat, saturated, noisy, storage; subject-metadata issues NWB Inspector rates CRITICAL),
       nwbinspector.csv, figures/<recording_id>_overview.png, summary.json (captioned figures and warnings)
       and provenance.json.
     mediaTypes:

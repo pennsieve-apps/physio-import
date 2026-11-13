@@ -93,7 +93,7 @@ Identical files (`x - Copy.wav`) are read once. Folders named `derivative`, `der
 |---|---|---|
 | `recordings` | input (subfolder) | recordings in any layout, plus optional `channels-map.csv`, `recordings-map.csv`, `layout.yaml`, SDS `subjects.xlsx`/`performances.xlsx`, BIDS `participants.tsv` |
 | `physio` | output | `recordings.csv`, `channels.csv`, `events.tsv`, `provenance.json`, `sub-<subject>/[ses-<session>/]<recording_id>.nwb` |
-| `qc` | output | `physio-import/qc.csv`, `nwbinspector.csv`, `figures/<recording_id>_overview.png`, `summary.json`, `provenance.json` |
+| `qc` | output | `physio-import/recordings.csv` and `channels.csv` (copies), `qc.csv`, `nwbinspector.csv`, `figures/<recording_id>_overview.png`, `summary.json`, `provenance.json` |
 
 ## Parameters
 
@@ -191,12 +191,12 @@ includes the page cache of the files read.
 
 | Demo | Input | Recordings | Wall time | Peak memory | NWB written |
 |---|---|---|---|---|---|
-| Discover 349 (pig, HDF5) | 496 MB, 20 trials, ECG 1 kHz, HR 500 Hz, 2 nerve cuffs + stimulus line at 30 kHz | 1 | 5.8 s | 748 MB | 21 MB |
-| Discover 655 (rat, CSV) | 3 × 20–28 min at 1 kHz, 108 MB | 3 | 4.3 s | 487 MB | 10 MB |
-| Discover 406 (human, WAV) | 30 WAV (10 identical copies), 500 Hz | 20 | 9.4 s | 284 MB | 12 MB |
-| Fantasia (WFDB) | 6 × 2 h at 250 Hz, 44,167 beat annotations | 6 | 11.0 s | 324 MB | 35 MB |
-| Autonomic Aging (WFDB) | 3 × 15–32 min at 1 kHz | 3 | 4.1 s | 295 MB | 17 MB |
-| OpenNeuro ds000210 + ds001242 (BIDS) | 3 runs at 50 Hz; 1 run with ECG/resp/SCR at 10 kHz (3.6 M samples) + eye tracker | 4 | 5.5 s | 398 MB | |
+| Discover 349 (pig, HDF5) | 496 MB, 20 trials, ECG 1 kHz, HR 500 Hz, 2 nerve cuffs + stimulus line at 30 kHz | 1 | 6.4 s | 753 MB | 21 MB |
+| Discover 655 (rat, CSV) | 3 × 20–28 min at 1 kHz, 108 MB | 3 | 4.7 s | 486 MB | 10 MB |
+| Discover 406 (human, WAV) | 30 WAV (10 identical copies), 500 Hz | 20 | 10.8 s | 283 MB | 12 MB |
+| Fantasia (WFDB) | 6 × 2 h at 250 Hz, 44,167 beat annotations | 6 | 10.0 s | 323 MB | 35 MB |
+| Autonomic Aging (WFDB) | 3 × 15–32 min at 1 kHz | 3 | 3.8 s | 295 MB | 17 MB |
+| OpenNeuro ds000210 + ds001242 (BIDS) | 3 runs at 50 Hz; 1 run with ECG/resp/SCR at 10 kHz (3.6 M samples) + eye tracker | 4 | 5.4 s | 398 MB | |
 
 Chosen: 1 vCPU, 2048 MiB, 900 s (fits Lambda). Tables and `.mat` files are loaded whole (pandas held
 1.7 M rows × 4 columns of Discover 655 in about 490 MB); every other format is read a slice at a time.

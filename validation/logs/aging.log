@@ -1,17 +1,17 @@
 === aging: /Users/joostw/code/pennsieve/workflow-physiology/data/autonomic-aging -> /Users/joostw/code/pennsieve/workflow-physiology/data/work/aging/physio-import
-2026-11-13 21:40:13,136 - INFO - physio-import 0.1.0: INPUT_DIR=/tmp/s/input OUTPUT_DIR=/tmp/s/output threads=1 (THREADS=0: 1 CPU(s) (cgroup CPU quota 1); cgroup memory limit 3072 MB fits 8 at ~300 MB each + 600 MB)
-2026-11-13 21:40:13,371 - INFO - not recordings (ignored): .dat x3
-2026-11-13 21:40:13,371 - INFO - 6 source file(s) to read
-2026-11-13 21:40:13,371 - INFO - [1/6] autonomic-aging/0001.hea (wfdb)
-2026-11-13 21:40:15,527 - INFO - sub-0001_rec-wfdb: 3 channel(s) [ecg=ECG1, ecg-2=ECG2, bp=NIBP], 900.4 s (900.4 s recorded, 1 segment(s)), 0 marker(s); written in 0.9s, 2.1s in total
-2026-11-13 21:40:15,528 - INFO - [2/6] autonomic-aging/0002.hea (wfdb)
-2026-11-13 21:40:16,390 - INFO - sub-0002_rec-wfdb: 3 channel(s) [ecg=ECG1, ecg-2=ECG2, bp=NIBP], 1938.3 s (1938.3 s recorded, 1 segment(s)), 3 marker(s); written in 0.2s, 0.9s in total
-2026-11-13 21:40:16,391 - INFO - [3/6] autonomic-aging/0003.hea (wfdb)
-2026-11-13 21:40:17,202 - INFO - sub-0003_rec-wfdb: 3 channel(s) [ecg=ECG1, ecg-2=ECG2, bp=NIBP], 1801.1 s (1801.1 s recorded, 1 segment(s)), 0 marker(s); written in 0.2s, 0.8s in total
-2026-11-13 21:40:17,203 - INFO - [4/6] autonomic-aging/LICENSE.txt (txt)
-2026-11-13 21:40:17,207 - WARNING - autonomic-aging/LICENSE.txt: skipped: not a readable table: Expected 6 fields in line 126, saw 11. Error could possibly be due to quotes being ignored when a multi-char delimiter is used.
-2026-11-13 21:40:17,207 - INFO - [5/6] autonomic-aging/SHA256SUMS.txt (txt)
-2026-11-13 21:40:17,217 - WARNING - autonomic-aging/SHA256SUMS.txt: skipped: no time column (Time, t, Time (s), ...) and SAMPLING_RATE not set
-2026-11-13 21:40:17,218 - INFO - [6/6] autonomic-aging/subject-info.csv (csv)
-2026-11-13 21:40:17,225 - WARNING - autonomic-aging/subject-info.csv: skipped: no time column (Time, t, Time (s), ...) and SAMPLING_RATE not set
-2026-11-13 21:40:17,238 - INFO - 3 recording(s) written, 0 failed, 3 file(s) skipped in 4.1s, peak memory 295 MB
+2026-11-13 21:53:41,499 - INFO - physio-import 0.1.0: INPUT_DIR=/tmp/s/input OUTPUT_DIR=/tmp/s/output threads=1 (THREADS=0: 1 CPU(s) (cgroup CPU quota 1); cgroup memory limit 3072 MB fits 8 at ~300 MB each + 600 MB)
+2026-11-13 21:53:41,706 - INFO - not recordings (ignored): .dat x3
+2026-11-13 21:53:41,706 - INFO - 6 source file(s) to read
+2026-11-13 21:53:41,706 - INFO - [1/6] autonomic-aging/0001.hea (wfdb)
+2026-11-13 21:53:43,656 - INFO - sub-0001_rec-wfdb: 3 channel(s) [ecg=ECG1, ecg-2=ECG2, bp=NIBP], 900.4 s (900.4 s recorded, 1 segment(s)), 0 marker(s); written in 0.8s, 1.9s in total
+2026-11-13 21:53:43,657 - INFO - [2/6] autonomic-aging/0002.hea (wfdb)
+2026-11-13 21:53:44,465 - INFO - sub-0002_rec-wfdb: 3 channel(s) [ecg=ECG1, ecg-2=ECG2, bp=NIBP], 1938.3 s (1938.3 s recorded, 1 segment(s)), 3 marker(s); written in 0.2s, 0.8s in total
+2026-11-13 21:53:44,465 - INFO - [3/6] autonomic-aging/0003.hea (wfdb)
+2026-11-13 21:53:45,276 - INFO - sub-0003_rec-wfdb: 3 channel(s) [ecg=ECG1, ecg-2=ECG2, bp=NIBP], 1801.1 s (1801.1 s recorded, 1 segment(s)), 0 marker(s); written in 0.2s, 0.8s in total
+2026-11-13 21:53:45,276 - INFO - [4/6] autonomic-aging/LICENSE.txt (txt)
+2026-11-13 21:53:45,280 - WARNING - autonomic-aging/LICENSE.txt: skipped: not a readable table: Expected 6 fields in line 126, saw 11. Error could possibly be due to quotes being ignored when a multi-char delimiter is used.
+2026-11-13 21:53:45,280 - INFO - [5/6] autonomic-aging/SHA256SUMS.txt (txt)
+2026-11-13 21:53:45,290 - WARNING - autonomic-aging/SHA256SUMS.txt: skipped: no time column (Time, t, Time (s), ...) and SAMPLING_RATE not set
+2026-11-13 21:53:45,290 - INFO - [6/6] autonomic-aging/subject-info.csv (csv)
+2026-11-13 21:53:45,298 - WARNING - autonomic-aging/subject-info.csv: skipped: no time column (Time, t, Time (s), ...) and SAMPLING_RATE not set
+2026-11-13 21:53:45,311 - INFO - 3 recording(s) written, 0 failed, 3 file(s) skipped in 3.8s, peak memory 295 MB

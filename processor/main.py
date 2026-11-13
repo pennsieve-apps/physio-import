@@ -414,6 +414,10 @@ def process(rec, rid: str, meta: dict, rel: str, cmap, out_physio: Path, figdir:
     for i in issues:
         insp_rows.append([rid, i["importance"], i["check"], i["object"], i["message"]])
     crit = [i for i in issues if i["importance"] == "CRITICAL" and i["check"] not in METADATA_CHECKS]
+    for i in issues:
+        if i["importance"] == "CRITICAL" and i["check"] in METADATA_CHECKS:
+            qc_rows.append([rid, "", "nwbinspector_critical_kept", i["check"],
+                            f"{i['message']} (missing subject metadata: reported, the recording is kept)"])
     qc_rows.append([rid, "", "nwbinspector_messages", str(len(issues)),
                     ", ".join(sorted({i["importance"] for i in issues}))])
     if crit:
@@ -570,7 +574,8 @@ def main() -> int:
               input_root=input_dir)
 
     rec_rows, ch_rows, ev_rows, qc_rows, insp_rows = [], [], [], [], []
-    per_rec: dict[str, dict] = {}
+    per_rec: dict[str, dict] = {}         # recording id -> status (recordings only)
+    skipped_files: dict[str, dict] = {}   # input file -> why it gave no recording (skipped, unreadable, duplicate)
     headlines, figures, warnings_out = {}, [], []
     used_ids: set[str] = set()
     n_ok = n_failed = 0
@@ -582,13 +587,13 @@ def main() -> int:
             recs = readers.read(path, fmt_, ctx)
         except Skip as e:
             log.warning("%s: skipped: %s", r, e)
-            per_rec[r] = {"status": "skipped", "reason": str(e), "source_format": fmt_}
+            skipped_files[r] = {"status": "skipped", "reason": str(e), "source_format": fmt_}
             warnings_out.append(f"{r}: skipped: {e}")
             continue
         except Exception as e:  # noqa: BLE001
             log.error("%s: failed to read: %s", r, e)
             log.debug(traceback.format_exc())
-            per_rec[r] = {"status": "failed", "error": f"{type(e).__name__}: {e}", "source_format": fmt_}
+            skipped_files[r] = {"status": "failed", "error": f"{type(e).__name__}: {e}", "source_format": fmt_}
             warnings_out.append(f"{r}: failed: {e}")
             n_failed += 1
             continue
@@ -634,7 +639,7 @@ def main() -> int:
                                     "subjects.xlsx): later steps assume human")
             n_ok += 1
     for a, b in found.duplicates:
-        per_rec[rel(a)] = {"status": "skipped", "reason": f"identical to {rel(b)}"}
+        skipped_files[rel(a)] = {"status": "skipped", "reason": f"identical to {rel(b)}"}
 
     _write_tables(out_physio, out_qc, rec_rows, ch_rows, ev_rows, qc_rows, insp_rows)
     finished = datetime.now(timezone.utc)
@@ -646,7 +651,7 @@ def main() -> int:
         "finished": finished.isoformat(timespec="seconds").replace("+00:00", "Z"),
         "wall_seconds": round(time.monotonic() - t_start, 2), "peak_rss_mb": peak_rss_mb(),
         "threads": {"requested": int(raw_params["THREADS"] or 0), "used": _THREADS, "why": _THREADS_WHY},
-        "recordings": per_rec, "citations": CITATIONS, "licence_notice": None,
+        "recordings": per_rec, "skipped_files": skipped_files, "citations": CITATIONS, "licence_notice": None,
     }
     for p in (out_physio / "provenance.json", out_qc / "provenance.json"):
         with open(p, "w", encoding="utf-8") as fh:
@@ -655,12 +660,11 @@ def main() -> int:
     summary = {
         "app": APP_NAME, "version": app_version(), "recordings": headlines, "figures": figures,
         "tables": [
-            {"path": "../../physio/recordings.csv", "caption": "One row per recording: ids, species, start time, "
-             "duration, channel types, source file and where the metadata came from."},
-            {"path": "../../physio/channels.csv", "caption": "One row per channel: NWB name, type and how it was "
-             "decided (typing), unit, rate, whether it is calibrated, the factor applied (scale), and status."},
-            {"path": "../../physio/events.tsv", "caption": "Markers and annotations found in the source files "
-             "(BIDS-style events; stimulation parameters are added by stim-events)."},
+            {"path": "recordings.csv", "caption": "One row per recording: ids, species, start time, "
+             "duration, channel types, source file and where the metadata came from (a copy of the physio port's)."},
+            {"path": "channels.csv", "caption": "One row per channel: NWB name, type and how it was decided (typing), "
+             "unit, rate, whether it is calibrated, the factor applied (scale), status and derived_from (a copy of the "
+             "physio port's)."},
             {"path": "qc.csv", "caption": "Per-channel checks: missing samples, range, flat and saturated fractions, "
              "lag-1 autocorrelation, status and how the samples are stored; NWB Inspector message counts."},
             {"path": "nwbinspector.csv", "caption": "NWB Inspector messages for every NWB file written (CRITICAL "
@@ -673,7 +677,7 @@ def main() -> int:
     with open(out_qc / "summary.json", "w", encoding="utf-8") as fh:
         json.dump(summary, fh, indent=2, ensure_ascii=False, default=str)
     log.info("%d recording(s) written, %d failed, %d file(s) skipped in %.1fs, peak memory %.0f MB",
-             n_ok, n_failed, sum(1 for v in per_rec.values() if v.get("status") == "skipped"),
+             n_ok, n_failed, sum(1 for v in skipped_files.values() if v.get("status") == "skipped"),
              time.monotonic() - t_start, provenance["peak_rss_mb"])
     if n_ok == 0:
         log.error("no recording could be imported")
@@ -693,6 +697,9 @@ def _write_tables(out_physio: Path, out_qc: Path, rec_rows, ch_rows, ev_rows, qc
     write_csv(out_physio / "channels.csv", CH_COLS, ch_rows)
     extra = [c for c in ("annotator", "marker_channel") if any(r.get(c, "n/a") != "n/a" for r in ev_rows)]
     write_csv(out_physio / "events.tsv", EV_COLS + extra, ev_rows, "\t")
+    # copies in the qc port, so a report linked only to qc can show subjects, signals and calibration
+    write_csv(out_qc / "recordings.csv", REC_COLS, rec_rows)
+    write_csv(out_qc / "channels.csv", CH_COLS, ch_rows)
     write_csv(out_qc / "qc.csv", QC_COLS, qc_rows)
     write_csv(out_qc / "nwbinspector.csv", INSP_COLS, insp_rows)
 

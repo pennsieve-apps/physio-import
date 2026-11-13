@@ -1,13 +1,13 @@
 === d655: /Users/joostw/code/pennsieve/workflow-physiology/data/discover-655 -> /Users/joostw/code/pennsieve/workflow-physiology/data/work/d655/physio-import
-2026-11-13 21:39:46,432 - INFO - physio-import 0.1.0: INPUT_DIR=/tmp/s/input OUTPUT_DIR=/tmp/s/output threads=1 (THREADS=0: 1 CPU(s) (cgroup CPU quota 1); cgroup memory limit 3072 MB fits 8 at ~300 MB each + 600 MB)
-2026-11-13 21:39:46,739 - INFO - config channels_map: channels-map.csv
-2026-11-13 21:39:46,740 - INFO - config sds: discover-655/files/performances.xlsx, discover-655/files/subjects.xlsx
-2026-11-13 21:39:46,740 - INFO - not recordings (ignored): .json x1, .md x3, .s2rx x3
-2026-11-13 21:39:46,740 - INFO - 3 source file(s) to read
-2026-11-13 21:39:46,740 - INFO - [1/3] discover-655/files/primary/sub-Bimodal01/perf-Bimodal01-set01-trial01-gain02/Perf-Bimodal01-set01-trial01-gain02.smrx.csv (csv)
-2026-11-13 21:39:48,849 - INFO - sub-Bimodal01_ses-set01-trial01-gain02_rec-csv: 3 channel(s) [ecg=3 ECG, stim=4 StimAmp, stim-2=5 CtrlAmp], 1234.3 s (1234.3 s recorded, 1 segment(s)), 0 marker(s); written in 0.8s, 2.0s in total
-2026-11-13 21:39:48,849 - INFO - [2/3] discover-655/files/primary/sub-Bimodal01/perf-Bimodal01-set01-trial02-gain05/Perf-Bimodal01-set01-trial02-gain05.smrx.csv (csv)
-2026-11-13 21:39:49,862 - INFO - sub-Bimodal01_ses-set01-trial02-gain05_rec-csv: 3 channel(s) [ecg=3 ECG, stim=4 StimAmp, stim-2=5 CtrlAmp], 1668.8 s (1668.8 s recorded, 1 segment(s)), 0 marker(s); written in 0.2s, 0.7s in total
-2026-11-13 21:39:49,862 - INFO - [3/3] discover-655/files/primary/sub-Bimodal01/perf-Bimodal01-set01-trial03-gain10/Perf-Bimodal01-set01-trial03-gain10.smrx.csv (csv)
-2026-11-13 21:39:50,756 - INFO - sub-Bimodal01_ses-set01-trial03-gain10_rec-csv: 3 channel(s) [ecg=3 ECG, stim=4 StimAmp, stim-2=5 CtrlAmp], 1268.2 s (1268.2 s recorded, 1 segment(s)), 0 marker(s); written in 0.2s, 0.7s in total
-2026-11-13 21:39:50,769 - INFO - 3 recording(s) written, 0 failed, 0 file(s) skipped in 4.3s, peak memory 487 MB
+2026-11-13 21:53:13,947 - INFO - physio-import 0.1.0: INPUT_DIR=/tmp/s/input OUTPUT_DIR=/tmp/s/output threads=1 (THREADS=0: 1 CPU(s) (cgroup CPU quota 1); cgroup memory limit 3072 MB fits 8 at ~300 MB each + 600 MB)
+2026-11-13 21:53:14,335 - INFO - config channels_map: channels-map.csv
+2026-11-13 21:53:14,335 - INFO - config sds: discover-655/files/performances.xlsx, discover-655/files/subjects.xlsx
+2026-11-13 21:53:14,335 - INFO - not recordings (ignored): .json x1, .md x3, .s2rx x3
+2026-11-13 21:53:14,335 - INFO - 3 source file(s) to read
+2026-11-13 21:53:14,335 - INFO - [1/3] discover-655/files/primary/sub-Bimodal01/perf-Bimodal01-set01-trial01-gain02/Perf-Bimodal01-set01-trial01-gain02.smrx.csv (csv)
+2026-11-13 21:53:16,688 - INFO - sub-Bimodal01_ses-set01-trial01-gain02_rec-csv: 3 channel(s) [ecg=3 ECG, stim=4 StimAmp, stim-2=5 CtrlAmp], 1234.3 s (1234.3 s recorded, 1 segment(s)), 0 marker(s); written in 0.9s, 2.2s in total
+2026-11-13 21:53:16,688 - INFO - [2/3] discover-655/files/primary/sub-Bimodal01/perf-Bimodal01-set01-trial02-gain05/Perf-Bimodal01-set01-trial02-gain05.smrx.csv (csv)
+2026-11-13 21:53:17,713 - INFO - sub-Bimodal01_ses-set01-trial02-gain05_rec-csv: 3 channel(s) [ecg=3 ECG, stim=4 StimAmp, stim-2=5 CtrlAmp], 1668.8 s (1668.8 s recorded, 1 segment(s)), 0 marker(s); written in 0.2s, 0.7s in total
+2026-11-13 21:53:17,713 - INFO - [3/3] discover-655/files/primary/sub-Bimodal01/perf-Bimodal01-set01-trial03-gain10/Perf-Bimodal01-set01-trial03-gain10.smrx.csv (csv)
+2026-11-13 21:53:18,665 - INFO - sub-Bimodal01_ses-set01-trial03-gain10_rec-csv: 3 channel(s) [ecg=3 ECG, stim=4 StimAmp, stim-2=5 CtrlAmp], 1268.2 s (1268.2 s recorded, 1 segment(s)), 0 marker(s); written in 0.2s, 0.8s in total
+2026-11-13 21:53:18,682 - INFO - 3 recording(s) written, 0 failed, 0 file(s) skipped in 4.7s, peak memory 486 MB
